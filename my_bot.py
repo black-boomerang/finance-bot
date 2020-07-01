@@ -11,7 +11,7 @@ class BotHandler:
         self.token = token
         self.api_url = "https://api.telegram.org/bot{}/".format(token)
 
-    def get_updates(self, offset=None, timeout=30):
+    def get_updates(self, offset=None, timeout=7200):
         method = 'getUpdates'
         params = {'timeout': timeout, 'offset': offset}
         resp = requests.get(self.api_url + method, params)
@@ -30,7 +30,7 @@ class BotHandler:
         if len(get_result) > 0:
             last_update = get_result[-1]
         else:
-            last_update = get_result[len(get_result)]
+            last_update = None
 
         return last_update
 
@@ -49,6 +49,9 @@ def main():
         greet_bot.get_updates(new_offset)
 
         last_update = greet_bot.get_last_update()
+        print("ok")
+        if last_update is None:
+            continue
 
         last_update_id = last_update['update_id']
         last_chat_text = last_update['message']['text']

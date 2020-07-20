@@ -14,10 +14,9 @@ def get_rangs_dict(order_filter, table_type, param):
 
     for i in range(1, 7531, 20):
         if i % 400 == 1:
-            print(i / 7531 * 100, '%')
+            print(i * 100 // 7531, '%')
 
         url = start_url + str(i)
-
         head = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)         Chrome/83.0.4103.116 Safari/537.36'}
         page = requests.get(url, headers=head)

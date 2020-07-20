@@ -1,2 +1,2 @@
 bot: python my_bot.py
-web: python finance/ranking.py
+worker: python finance/ranking.py

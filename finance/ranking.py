@@ -34,8 +34,7 @@ def get_rangs_dict(order_filter, table_type, param):
 
 
 if __name__ == '__main__':
-    print(os.listdir())
-    white_list = pd.read_excel('white_list_SPBEX.xlsx')
+    white_list = pd.read_excel('finance\white_list_SPBEX.xlsx')
     tickers = white_list['Торговый код'].to_list()
 
     pe_rangs, pe = get_rangs_dict('pe', 1, 7)
@@ -51,3 +50,5 @@ if __name__ == '__main__':
     rangs['Summary rang'] = rangs['E/P rang'] + rangs['ROE rang']
     rangs.loc[tickers].sort_values('Summary rang').dropna().to_excel(
         'ordered_rangs_' + datetime.today().strftime('%Y_%m_%d') + '.xlsx')
+
+    print('Ranking in done!')

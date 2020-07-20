@@ -1,7 +1,8 @@
+from datetime import datetime
+
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
-from datetime import datetime
 
 
 def get_rangs_dict(order_filter, table_type, param):

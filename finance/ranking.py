@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 
 import pandas as pd
@@ -33,6 +34,7 @@ def get_rangs_dict(order_filter, table_type, param):
 
 
 if __name__ == '__main__':
+    print(os.listdir())
     white_list = pd.read_excel('white_list_SPBEX.xlsx')
     tickers = white_list['Торговый код'].to_list()
 

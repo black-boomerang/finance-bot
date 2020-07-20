@@ -42,17 +42,16 @@ now = datetime.datetime.now()
 
 def main():
     new_offset = None
-    today = now.day
-    hour = now.hour
 
     while True:
         greet_bot.get_updates(new_offset)
 
         last_update = greet_bot.get_last_update()
-        print("ok")
         if last_update is None:
             continue
 
+        today = now.day
+        hour = now.hour
         last_update_id = last_update['update_id']
         last_chat_text = last_update['message']['text']
         last_chat_id = last_update['message']['chat']['id']

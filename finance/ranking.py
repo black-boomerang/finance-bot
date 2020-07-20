@@ -48,7 +48,8 @@ if __name__ == '__main__':
     rangs = pd.concat([ep_rang_series, ep_series, roe_rang_series, roe_series],
                       axis=1, sort=False)
     rangs['Summary rang'] = rangs['E/P rang'] + rangs['ROE rang']
-    rangs.loc[tickers].sort_values('Summary rang').dropna().to_excel(
+    rangs.loc[rangs.index.intersection(tickers)].sort_values(
+        'Summary rang').dropna().to_excel(
         'ordered_rangs_' + datetime.today().strftime('%Y_%m_%d') + '.xlsx')
 
     print('Ranking in done!')

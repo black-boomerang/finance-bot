@@ -34,7 +34,8 @@ def get_rangs_dict(order_filter, table_type, param):
 
 
 if __name__ == '__main__':
-    white_list = pd.read_excel('finance\white_list_SPBEX.xlsx')
+    white_list = pd.read_excel(
+        os.path.join('finance', 'white_list_SPBEX.xlsx'))
     tickers = white_list['Торговый код'].to_list()
 
     pe_rangs, pe = get_rangs_dict('pe', 1, 7)

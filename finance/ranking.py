@@ -1,9 +1,22 @@
 import os
 from datetime import datetime
 
+import boto3
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
+
+import settings
+
+
+def upload_to_cloud(filename):
+    s3_client = boto3.client('s3',
+                             aws_access_key_id=settings.CLOUDCUBE_ACCESS_KEY_ID,
+                             aws_secret_access_key=settings.CLOUDCUBE_SECRET_ACCESS_KEY)
+
+    response = s3_client.upload_file(filename, 'cloud-cube',
+                                     settings.CLOUDCUBE_URL[
+                                     -12:] + '/white_list.xlsx')
 
 
 def get_rangs_dict(order_filter, table_type, param):
@@ -34,7 +47,7 @@ def get_rangs_dict(order_filter, table_type, param):
 
 if __name__ == '__main__':
     white_list = pd.read_excel(
-        os.path.join('finance', 'white_list_SPBEX.xlsx'))
+        os.path.join('resources', 'white_list.xlsx'))
     tickers = white_list['Торговый код'].to_list()
 
     pe_rangs, pe = get_rangs_dict('pe', 1, 7)
@@ -48,8 +61,13 @@ if __name__ == '__main__':
     rangs = pd.concat([ep_rang_series, ep_series, roe_rang_series, roe_series],
                       axis=1, sort=False)
     rangs['Summary rang'] = rangs['E/P rang'] + rangs['ROE rang']
+
+    filename = 'ordered_rangs_' + datetime.today().strftime(
+        '%Y_%m_%d') + '.xlsx'
     rangs.loc[rangs.index.intersection(tickers)].sort_values(
-        'Summary rang').dropna().to_excel(
-        'ordered_rangs_' + datetime.today().strftime('%Y_%m_%d') + '.xlsx')
+        'Summary rang').dropna().to_excel(filename)
+
+    upload_to_cloud(filename)
+    os.remove(filename)
 
     print('Ranking in done!')

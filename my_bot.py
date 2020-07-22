@@ -2,7 +2,9 @@ import datetime
 
 import requests
 
-token = '1025870185:AAFf5-F7lQJ-7Ly5wCj4SxPV8ZLQNuBX300'
+import settings
+
+token = settings.TELEGRAM_API_TOKEN
 
 
 class BotHandler:

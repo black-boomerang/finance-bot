@@ -14,9 +14,9 @@ def upload_to_cloud(filename):
                              aws_access_key_id=settings.CLOUDCUBE_ACCESS_KEY_ID,
                              aws_secret_access_key=settings.CLOUDCUBE_SECRET_ACCESS_KEY)
 
-    response = s3_client.upload_file(filename, 'cloud-cube',
-                                     settings.CLOUDCUBE_URL[
-                                     -12:] + '/white_list.xlsx')
+    s3_client.upload_file(filename, 'cloud-cube',
+                          settings.CLOUDCUBE_URL[
+                          -12:] + '/public/' + filename)
 
 
 def get_rangs_dict(order_filter, table_type, param):

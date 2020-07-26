@@ -4,7 +4,7 @@ import requests
 
 import settings
 
-token = settings.TELEGRAM_API_TOKEN
+token = settings.TELEGRAM_API_TOKEN2
 
 
 class BotHandler:

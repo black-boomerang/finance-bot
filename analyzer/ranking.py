@@ -1,25 +1,15 @@
 import os
+import sys
 from datetime import datetime
 
-import boto3
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 
-import settings
+from analyzer.cloud_manager import upload_to_cloud
 
 
-def upload_to_cloud(filename):
-    s3_client = boto3.client('s3',
-                             aws_access_key_id=settings.CLOUDCUBE_ACCESS_KEY_ID,
-                             aws_secret_access_key=settings.CLOUDCUBE_SECRET_ACCESS_KEY)
-
-    s3_client.upload_file(filename, 'cloud-cube',
-                          settings.CLOUDCUBE_URL[
-                          -12:] + '/public/' + filename)
-
-
-def get_rangs_dict(order_filter, table_type, param):
+def get_ranks_dict(order_filter, table_type, param):
     start_url = 'https://finviz.com/screener.ashx?v=1' + str(
         table_type) + '1ft=3&o={}&r='.format(order_filter)
     rangs = dict()
@@ -46,12 +36,15 @@ def get_rangs_dict(order_filter, table_type, param):
 
 
 if __name__ == '__main__':
+    if datetime.today().weekday() > 4:
+        sys.exit()
+
     white_list = pd.read_excel(
         os.path.join('resources', 'white_list.xlsx'))
     tickers = white_list['Торговый код'].to_list()
 
-    pe_rangs, pe = get_rangs_dict('pe', 1, 7)
-    roe_rangs, roe = get_rangs_dict('-roe', 6, 5)
+    pe_rangs, pe = get_ranks_dict('pe', 1, 7)
+    roe_rangs, roe = get_ranks_dict('-roe', 6, 5)
 
     ep_rang_series = pd.Series(pe_rangs, name='E/P rang')
     ep_series = (1 / pd.Series(pe, name='E/P (%)')) * 100

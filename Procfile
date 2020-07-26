@@ -1,1 +1,1 @@
-bot: python my_bot.py
+bot: python bot/bot_worker.py

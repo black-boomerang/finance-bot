@@ -74,17 +74,16 @@ class Analyzer:
             try:
                 page.html.render(wait=4, sleep=4, timeout=timeout,
                                  scrolldown=4)
+                text = page.html.html
+                rating = [re.search(
+                    r'\d*\.?\d+ on a scale of 1 to 5, where 1 is Strong Buy and 5 is Sell',
+                    text).group(0).split()[0]]
+                values = re.search(
+                    r'Low  \d*\.?\d+ Current  \d*\.?\d+ Average  \d*\.?\d+ High  \d*\.?\d+',
+                    text).group(0).split()[1::2]
                 break
             except Exception:
                 print('EstimationError!')
-
-        text = page.html.html
-        rating = [re.search(
-            r'\d*\.?\d+ on a scale of 1 to 5, where 1 is Strong Buy and 5 is Sell',
-            text).group(0).split()[0]]
-        values = re.search(
-            r'Low  \d*\.?\d+ Current  \d*\.?\d+ Average  \d*\.?\d+ High  \d*\.?\d+',
-            text).group(0).split()[1::2]
 
         return list(map(float, rating + values))
 

@@ -3,9 +3,12 @@ import re
 from datetime import datetime, timedelta
 
 import pandas as pd
+import requests
 from bs4 import BeautifulSoup
-from requests_html import HTMLSession
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 
+import settings
 from analyzer.cloud_manager import CloudManager
 
 
@@ -29,8 +32,12 @@ class Analyzer:
                 print(i * 100 // 7531, '%')
 
             url = start_url + str(i)
-            with HTMLSession() as session:
-                page = session.get(url)
+            headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; '
+                                     'Win64; x64) AppleWebKit/537.36 '
+                                     '(KHTML, like Gecko) '
+                                     'Chrome/83.0.4103.116 '
+                                     'Safari/537.36 OPR/69.0.3686.95'}
+            page = requests.get(url, headers=headers)
 
             soup = BeautifulSoup(page.text, 'lxml')
             tbl = soup.find('table', bgcolor='#d3d3d3')
@@ -62,38 +69,51 @@ class Analyzer:
         need_tickers_ranks = ranks.loc[ranks.index.intersection(tickers)]
         return need_tickers_ranks.sort_values('Summary rang')
 
-    @staticmethod
-    def _get_quote_estimation(ticker, timeout=60):
-
+    def _get_quote_estimation(self, ticker, timeout=60):
         url = 'https://finance.yahoo.com/quote/{0}/analysis?p={0}'.format(
             ticker)
-        with HTMLSession() as session:
-            page = session.get(url)
 
-        for i in range(5):
-            try:
-                page.html.render(wait=20, sleep=20, timeout=timeout,
-                                 scrolldown=4)
-                text = page.html.html
-                rating = [re.search(
-                    r'\d*\.?\d+ on a scale of 1 to 5, where 1 is Strong Buy and 5 is Sell',
-                    text).group(0).split()[0]]
-                values = re.search(
-                    r'Low  \d*\.?\d+ Current  \d*\.?\d+ Average  \d*\.?\d+ High  \d*\.?\d+',
-                    text).group(0).split()[1::2]
-                break
-            except Exception:
-                print('EstimationError!')
+        self.driver.get(url)
+        self.driver.execute_script(
+            "document.getElementById('Col2-4-QuoteModule-Proxy').scrollIntoView();")
+        rating = [self.driver.find_element_by_xpath(
+            r'//*[@data-test="rec-rating-txt"]').text]
+        self.driver.execute_script(
+            "document.getElementById('Col2-5-QuoteModule-Proxy').scrollIntoView();")
+        text = self.driver.find_element_by_xpath(
+            r'//*[@class="Mb(35px) smartphone_Px(20px)"]').get_attribute(
+            'outerHTML')
+        values = re.search(
+            r'Low  \d*\.?\d+ Current  \d*\.?\d+ Average  \d*\.?\d+ High  \d*\.?\d+',
+            text).group(0).split()[1::2]
 
         return list(map(float, rating + values))
+
+    @staticmethod
+    def _chrome_init():
+        chrome_options = Options()
+        chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--no-sandbox')
+        chrome_options.add_argument('--disable-dev-shm-usage')
+        chrome_options.add_argument('--window-size=1920x1080')
+        chrome_options.add_argument('start-maximised')
+        chrome_options.binary_location = settings.GOOGLE_CHROME_BIN
+
+        driver = webdriver.Chrome(
+            executable_path=settings.CHROMEDRIVER_PATH,
+            chrome_options=chrome_options)
+        driver.implicitly_wait(60)
+        return driver
 
     def _get_estimation(self, tickers):
         columns = ['Rating', 'Low Target', 'Current Price', 'Average Target',
                    'High Target']
         estimation = pd.DataFrame(index=tickers, columns=columns)
+        self.driver = self._chrome_init()
         for ticker in tickers:
             estimation.loc[ticker] = self._get_quote_estimation(ticker)
             print(ticker + ' is analyzed')
+        self.driver.quit()
         return estimation
 
     def _get_candidates(self, companies_number=30):

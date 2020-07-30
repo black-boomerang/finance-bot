@@ -72,7 +72,7 @@ class Analyzer:
 
         for i in range(5):
             try:
-                page.html.render(wait=4, sleep=4, timeout=timeout,
+                page.html.render(wait=20, sleep=20, timeout=timeout,
                                  scrolldown=4)
                 text = page.html.html
                 rating = [re.search(

@@ -111,8 +111,13 @@ class Analyzer:
         estimation = pd.DataFrame(index=tickers, columns=columns)
         self.driver = self._chrome_init()
         for ticker in tickers:
-            estimation.loc[ticker] = self._get_quote_estimation(ticker)
-            print(ticker + ' is analyzed')
+            for i in range(5):
+                try:
+                    estimation.loc[ticker] = self._get_quote_estimation(ticker)
+                    print(ticker + ' is analyzed')
+                    break
+                except Exception:
+                    pass
         self.driver.quit()
         return estimation
 
@@ -124,7 +129,8 @@ class Analyzer:
 
         if datetime.today().weekday() <= 4:
             ranking = self._get_new_ranking()
-            primary_companies = ranking.head(companies_number).index.to_list()
+            primaries_number = companies_number * 4
+            primary_companies = ranking.head(primaries_number).index.to_list()
             estimation = self._get_estimation(primary_companies)
             ranking = pd.concat([ranking, estimation], axis=1)
             ranking.to_csv(filename)

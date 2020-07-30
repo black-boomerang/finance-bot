@@ -26,8 +26,8 @@ class FinanceBot(telebot.TeleBot):
             callback_data='help')
 
         self.thread = ScheduleThread(self.send_recommendations, 'cron',
-                                     day_of_week='mon-fri', hour=16,
-                                     minute=32)
+                                     day_of_week='mon-fri', hour=17,
+                                     minute=15)
         self.thread.start()
 
     @staticmethod
@@ -44,7 +44,7 @@ class FinanceBot(telebot.TeleBot):
         return '`' + recommendations_text + table.get_string() + '`'
 
     def send_recommendations(self):
-        companies_number = 30
+        companies_number = 5
         best_companies = self.analyzer.get_best_companies(companies_number)
         recommendations_text = self._get_recommendations_text(best_companies)
         subscribers = self.database_manager.get_subscribers()

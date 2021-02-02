@@ -1,15 +1,11 @@
 import os
-import re
 from datetime import datetime, timedelta
 
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 
-import settings
-from analyzer.cloud_manager import CloudManager
+from storage import CloudManager
 
 
 class Analyzer:
@@ -69,47 +65,25 @@ class Analyzer:
         need_tickers_ranks = ranks.loc[ranks.index.intersection(tickers)]
         return need_tickers_ranks.sort_values('Summary rang')
 
-    def _get_quote_estimation(self, ticker, timeout=60):
-        url = 'https://finance.yahoo.com/quote/{0}/analysis?p={0}'.format(
+    def _get_quote_estimation(self, ticker):
+        ticker = ticker.replace('@', '.')
+        url = r'https://query1.finance.yahoo.com/v10/finance/quoteSummary/{0}?modules=financialData'.format(
             ticker)
 
-        self.driver.get(url)
-        self.driver.execute_script(
-            "document.getElementById('Col2-4-QuoteModule-Proxy').scrollIntoView();")
-        rating = [self.driver.find_element_by_xpath(
-            r'//*[@data-test="rec-rating-txt"]').text]
-        self.driver.execute_script(
-            "document.getElementById('Col2-5-QuoteModule-Proxy').scrollIntoView();")
-        text = self.driver.find_element_by_xpath(
-            r'//*[@class="Mb(35px) smartphone_Px(20px)"]').get_attribute(
-            'outerHTML')
-        values = re.search(
-            r'Low  \d*\.?\d+ Current  \d*\.?\d+ Average  \d*\.?\d+ High  \d*\.?\d+',
-            text).group(0).split()[1::2]
+        response = requests.get(url)
+        data = response.json()['quoteSummary']['result'][0]['financialData']
+        rating = data['recommendationMean']['raw']
+        low = data['targetLowPrice']['raw']
+        current = data['currentPrice']['raw']
+        average = data['targetMeanPrice']['raw']
+        high = data['targetHighPrice']['raw']
 
-        return list(map(float, rating + values))
-
-    @staticmethod
-    def _chrome_init():
-        chrome_options = Options()
-        chrome_options.add_argument('--headless')
-        chrome_options.add_argument('--no-sandbox')
-        chrome_options.add_argument('--disable-dev-shm-usage')
-        chrome_options.add_argument('--window-size=1920x1080')
-        chrome_options.add_argument('start-maximised')
-        chrome_options.binary_location = settings.GOOGLE_CHROME_BIN
-
-        driver = webdriver.Chrome(
-            executable_path=settings.CHROMEDRIVER_PATH,
-            chrome_options=chrome_options)
-        driver.implicitly_wait(60)
-        return driver
+        return [rating, low, current, average, high]
 
     def _get_estimation(self, tickers):
         columns = ['Rating', 'Low Target', 'Current Price', 'Average Target',
                    'High Target']
         estimation = pd.DataFrame(index=tickers, columns=columns)
-        self.driver = self._chrome_init()
         for ticker in tickers:
             for i in range(5):
                 try:
@@ -118,7 +92,6 @@ class Analyzer:
                     break
                 except Exception:
                     pass
-        self.driver.quit()
         return estimation
 
     def _get_candidates(self, companies_number=30):

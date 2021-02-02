@@ -24,3 +24,8 @@ class CloudManager:
         except botocore.exceptions.ClientError:
             return False
         return True
+
+    def delete_from_cloud(self, filename):
+        self.s3_client.delete_object(Bucket='cloud-cube',
+                                     Key=settings.CLOUDCUBE_URL[
+                                         -12:] + '/public/' + filename)

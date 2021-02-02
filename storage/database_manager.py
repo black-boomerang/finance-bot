@@ -72,3 +72,8 @@ class DatabaseManager:
         return [dict(zip(self.keys, values)) for values in self.execute_sql(
             os.path.join('SQL_scripts', 'select_all_subscribers.sql'),
             is_fetch=True)]
+
+    def get_subscriber_by_id(self, subscriber_id):
+        return dict(zip(self.keys, *self.execute_sql(
+            os.path.join('SQL_scripts', 'select_by_id.sql'),
+            params=(subscriber_id,), is_fetch=True)))

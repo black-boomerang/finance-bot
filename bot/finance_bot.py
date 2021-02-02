@@ -1,9 +1,10 @@
 import telebot
 from prettytable import PrettyTable
 
+import assets
 from analyzer import Analyzer
-from bot.database_manager import DatabaseManager
 from schedule_thread import ScheduleThread
+from storage import DatabaseManager
 
 
 class FinanceBot(telebot.TeleBot):
@@ -11,6 +12,9 @@ class FinanceBot(telebot.TeleBot):
         super().__init__(token)
         self.database_manager = DatabaseManager()
         self.analyzer = Analyzer()
+        self.portfolio = assets.load_from_file('portfolio.pkl')
+        if self.portfolio is None:
+            self.portfolio = assets.Portfolio()
 
         self.keyboard_buttons = dict()
         self.keyboard_buttons[
@@ -26,8 +30,8 @@ class FinanceBot(telebot.TeleBot):
             callback_data='help')
 
         self.thread = ScheduleThread(self.send_recommendations, 'cron',
-                                     day_of_week='mon-fri', hour=17,
-                                     minute=15)
+                                     day_of_week='mon-fri', hour=9,
+                                     minute=30)
         self.thread.start()
 
     @staticmethod
@@ -35,12 +39,13 @@ class FinanceBot(telebot.TeleBot):
         recommendations_text = 'Список самых недооценённых акций на ' \
                                'Санкт-Петербуржской бирже на сегодняшний ' \
                                'день:\n'
-        table = PrettyTable(['Тикер', 'Рейтинг', 'Цена', 'Цель'])
+        table = PrettyTable(['Tck', 'Rt', 'Prc', 'Trg'])
         for index in companies.index.to_list():
             values = companies.loc[index]
             table.add_row(
                 [index, values.loc['Rating'], values.loc['Current Price'],
                  values.loc['Average Target']])
+        table.float_format = '.2'
         return '`' + recommendations_text + table.get_string() + '`'
 
     def send_recommendations(self):

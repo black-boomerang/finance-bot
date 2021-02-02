@@ -1,7 +1,6 @@
 import telebot
 from prettytable import PrettyTable
 
-import assets
 from analyzer import Analyzer
 from schedule_thread import ScheduleThread
 from storage import DatabaseManager
@@ -12,9 +11,6 @@ class FinanceBot(telebot.TeleBot):
         super().__init__(token)
         self.database_manager = DatabaseManager()
         self.analyzer = Analyzer()
-        self.portfolio = assets.load_from_file('portfolio.pkl')
-        if self.portfolio is None:
-            self.portfolio = assets.Portfolio()
 
         self.keyboard_buttons = dict()
         self.keyboard_buttons[

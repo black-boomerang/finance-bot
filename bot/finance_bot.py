@@ -29,7 +29,7 @@ class FinanceBot(telebot.TeleBot):
 
         self.thread = ScheduleThread(self.send_recommendations, 'cron',
                                      day_of_week='mon-fri', hour=20,
-                                     minute=12)
+                                     minute=30)
         self.thread.start()
 
     @staticmethod
@@ -51,7 +51,7 @@ class FinanceBot(telebot.TeleBot):
         self._get_recommendations_table(best_companies)
         recommendations_text = '`Список самых недооценённых акций на ' \
                                'Санкт-Петербуржской бирже на сегодняшний ' \
-                               'день:\n`'
+                               'день:`'
         with open('companies_table.png', 'rb') as sent_img:
             subscribers = self.database_manager.get_subscribers()
             for subscriber in subscribers:
@@ -62,7 +62,7 @@ class FinanceBot(telebot.TeleBot):
                                         parse_mode='Markdown')
                     except telebot.apihelper.ApiException:
                         pass
-        #os.remove('companies_table.png')
+        os.remove('companies_table.png')
 
     def send_message(self, chat_id, text, buttons=(), **kwargs):
         keyboard = telebot.types.InlineKeyboardMarkup()

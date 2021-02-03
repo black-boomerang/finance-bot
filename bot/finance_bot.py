@@ -64,9 +64,8 @@ class FinanceBot(telebot.TeleBot):
                     pass
         os.remove('companies_table.png')
 
-
-def send_message(self, chat_id, text, buttons=(), **kwargs):
-    keyboard = telebot.types.InlineKeyboardMarkup()
-    for button_name in buttons:
-        keyboard.row(self.keyboard_buttons[button_name])
-    super().send_message(chat_id, text, reply_markup=keyboard, **kwargs)
+    def send_message(self, chat_id, text, buttons=(), **kwargs):
+        keyboard = telebot.types.InlineKeyboardMarkup()
+        for button_name in buttons:
+            keyboard.row(self.keyboard_buttons[button_name])
+        super().send_message(chat_id, text, reply_markup=keyboard, **kwargs)

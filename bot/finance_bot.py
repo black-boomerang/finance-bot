@@ -28,8 +28,8 @@ class FinanceBot(telebot.TeleBot):
             callback_data='help')
 
         self.thread = ScheduleThread(self.send_recommendations, 'cron',
-                                     day_of_week='mon-fri', hour=20,
-                                     minute=55)
+                                     day_of_week='mon-fri', hour=21,
+                                     minute=5)
         self.thread.start()
 
     @staticmethod

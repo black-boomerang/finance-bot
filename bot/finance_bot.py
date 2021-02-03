@@ -29,7 +29,7 @@ class FinanceBot(telebot.TeleBot):
 
         self.thread = ScheduleThread(self.send_recommendations, 'cron',
                                      day_of_week='mon-fri', hour=20,
-                                     minute=30)
+                                     minute=55)
         self.thread.start()
 
     @staticmethod

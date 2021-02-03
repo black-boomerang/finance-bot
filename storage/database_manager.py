@@ -6,13 +6,18 @@ from storage.models import Base, User
 
 
 class DatabaseManager:
-    def __init__(self):
-        self.engine = create_engine(settings.DATABASE_URL)
+    def __init__(self, engine=None):
+        if engine is None:
+            engine = create_engine(settings.DATABASE_URL)
+        self.engine = engine
         self.session = sessionmaker(bind=self.engine)()
         self.metadata = Base.metadata
 
-    def create_subscribers_table(self):
+    def create_all(self):
         self.metadata.create_all(self.engine)
+
+    def drop_all(self):
+        self.metadata.drop_all(self.engine)
 
     def insert_subscriber(self, subscriber_id, subscriber_name, chat_id,
                           is_subscribe_recommends=True):

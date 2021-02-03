@@ -35,7 +35,7 @@ class FinanceBot(telebot.TeleBot):
         recommendations_text = 'Список самых недооценённых акций на ' \
                                'Санкт-Петербуржской бирже на сегодняшний ' \
                                'день:\n'
-        table = PrettyTable(['Tck', 'Rt', 'Prc', 'Trg'])
+        table = PrettyTable(['Тикер', 'Ранг', 'Цена', 'Цель'])
         for index in companies.index.to_list():
             values = companies.loc[index]
             table.add_row(

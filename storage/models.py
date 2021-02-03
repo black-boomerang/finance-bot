@@ -1,4 +1,6 @@
-from sqlalchemy import Column, Integer, String, Boolean
+from datetime import time
+
+from sqlalchemy import Column, Integer, String, Boolean, Time
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -11,6 +13,7 @@ class User(Base):
     user_name = Column(String, default='Уважаемый', nullable=False)
     chat_id = Column(Integer, nullable=False, unique=True)
     recommendations = Column(Boolean, default=True)
+    recommendations_time = Column(Time, default=time(9, 30))
 
     def __init__(self, user_id, user_name, chat_id, recommendations):
         self.user_id = user_id

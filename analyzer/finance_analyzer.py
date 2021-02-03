@@ -1,6 +1,7 @@
 import os
 from datetime import datetime, timedelta
 
+import numpy as np
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
@@ -63,9 +64,12 @@ class Analyzer:
         ranks['Summary rang'] = ranks['E/P rang'] + ranks['ROE rang']
 
         need_tickers_ranks = ranks.loc[ranks.index.intersection(tickers)]
+        idx = np.unique(need_tickers_ranks.index, return_index=True)[1]
+        need_tickers_ranks = need_tickers_ranks.iloc[idx]
         return need_tickers_ranks.sort_values('Summary rang')
 
-    def _get_quote_estimation(self, ticker):
+    @staticmethod
+    def _get_quote_estimation(ticker):
         ticker = ticker.replace('@', '.')
         url = r'https://query1.finance.yahoo.com/v10/finance/quoteSummary/{0}?modules=financialData'.format(
             ticker)
@@ -113,7 +117,9 @@ class Analyzer:
             ranking = pd.read_csv(filename, index_col=0)
         os.remove(filename)
 
-        return ranking.head(companies_number)
+        return ranking[
+            ranking['Current Price'] < ranking['Average Target']].head(
+            companies_number)
 
     def get_best_companies(self, companies_number=5):
         candidates = self._get_candidates(companies_number * 6)

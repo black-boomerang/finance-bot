@@ -37,12 +37,16 @@ class Analyzer:
             page = requests.get(url, headers=headers)
 
             soup = BeautifulSoup(page.text, 'lxml')
-            tbl = soup.find('table', bgcolor='#d3d3d3')
-            rows = tbl.findAll('tr', valign='top')
-            for row in rows:
-                tds = row.findAll('td')
-                ranks[tds[1].text] = int(tds[0].text)
-                params[tds[1].text] = float(tds[param].text.strip('%') + '0')
+            try:
+                tbl = soup.find('table', bgcolor='#d3d3d3')
+                rows = tbl.findAll('tr', valign='top')
+                for row in rows:
+                    tds = row.findAll('td')
+                    ranks[tds[1].text] = int(tds[0].text)
+                    params[tds[1].text] = float(
+                        tds[param].text.strip('%') + '0')
+            except:
+                pass
 
         return ranks, params
 

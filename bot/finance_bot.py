@@ -51,21 +51,22 @@ class FinanceBot(telebot.TeleBot):
         self._get_recommendations_table(best_companies)
         recommendations_text = '`Список самых недооценённых акций на ' \
                                'Санкт-Петербуржской бирже на сегодняшний ' \
-                               'день:`'
-        with open('companies_table.png', 'rb') as sent_img:
-            subscribers = self.database_manager.get_subscribers()
-            for subscriber in subscribers:
-                if subscriber['recommendations']:
-                    try:
+                               'день`'
+        subscribers = self.database_manager.get_subscribers()
+        for subscriber in subscribers:
+            if subscriber['recommendations']:
+                try:
+                    with open('companies_table.png', 'rb') as sent_img:
                         self.send_photo(subscriber['chat_id'], sent_img,
                                         recommendations_text,
                                         parse_mode='Markdown')
-                    except telebot.apihelper.ApiException:
-                        pass
+                except telebot.apihelper.ApiException:
+                    pass
         os.remove('companies_table.png')
 
-    def send_message(self, chat_id, text, buttons=(), **kwargs):
-        keyboard = telebot.types.InlineKeyboardMarkup()
-        for button_name in buttons:
-            keyboard.row(self.keyboard_buttons[button_name])
-        super().send_message(chat_id, text, reply_markup=keyboard, **kwargs)
+
+def send_message(self, chat_id, text, buttons=(), **kwargs):
+    keyboard = telebot.types.InlineKeyboardMarkup()
+    for button_name in buttons:
+        keyboard.row(self.keyboard_buttons[button_name])
+    super().send_message(chat_id, text, reply_markup=keyboard, **kwargs)

@@ -1,5 +1,7 @@
+import os
+
+import plotly.figure_factory as ff
 import telebot
-from prettytable import PrettyTable
 
 from analyzer import Analyzer
 from schedule_thread import ScheduleThread
@@ -31,32 +33,36 @@ class FinanceBot(telebot.TeleBot):
         self.thread.start()
 
     @staticmethod
-    def _get_recommendations_text(companies):
-        recommendations_text = 'Список самых недооценённых акций на ' \
-                               'Санкт-Петербуржской бирже на сегодняшний ' \
-                               'день:\n'
-        table = PrettyTable(['Тикер', 'Ранг', 'Цена', 'Цель'])
-        for index in companies.index.to_list():
-            values = companies.loc[index]
-            table.add_row(
-                [index, values.loc['Rating'], values.loc['Current Price'],
-                 values.loc['Average Target']])
-        table.float_format = '.2'
-        return '`' + recommendations_text + table.get_string() + '`'
+    def _get_recommendations_table(companies):
+        companies_df = companies.reset_index()[
+            ['index', 'Rating', 'Current Price', 'Average Target']]
+        companies_df.columns = ['Тикер', 'Рейтинг', 'Цена', 'Цель']
+        fig = ff.create_table(companies_df)
+        fig.update_layout(
+            autosize=False,
+            width=500,
+            height=200,
+        )
+        fig.write_image('companies_table.png', scale=2)
 
     def send_recommendations(self):
         companies_number = 5
         best_companies = self.analyzer.get_best_companies(companies_number)
-        recommendations_text = self._get_recommendations_text(best_companies)
-        subscribers = self.database_manager.get_subscribers()
-        for subscriber in subscribers:
-            if subscriber['recommendations']:
-                try:
-                    self.send_message(subscriber['chat_id'],
-                                      recommendations_text,
-                                      parse_mode='Markdown')
-                except telebot.apihelper.ApiException:
-                    pass
+        self._get_recommendations_table(best_companies)
+        recommendations_text = '`Список самых недооценённых акций на ' \
+                               'Санкт-Петербуржской бирже на сегодняшний ' \
+                               'день:\n`'
+        with open('companies_table.png', 'rb') as sent_img:
+            subscribers = self.database_manager.get_subscribers()
+            for subscriber in subscribers:
+                if subscriber['recommendations']:
+                    try:
+                        self.send_photo(subscriber['chat_id'], sent_img,
+                                        recommendations_text,
+                                        parse_mode='Markdown')
+                    except telebot.apihelper.ApiException:
+                        pass
+        #os.remove('companies_table.png')
 
     def send_message(self, chat_id, text, buttons=(), **kwargs):
         keyboard = telebot.types.InlineKeyboardMarkup()

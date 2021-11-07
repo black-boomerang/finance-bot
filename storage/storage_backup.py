@@ -7,7 +7,7 @@ from storage import CloudManager
 
 if __name__ == "__main__":
     cloud_manager = CloudManager()
-    start_date = date(2020, 7, 22)
+    start_date = date(2021, 8, 1)
     end_date = date.today()
     date_range = pd.date_range(start_date, end_date).strftime(
         '%Y_%m_%d').tolist()

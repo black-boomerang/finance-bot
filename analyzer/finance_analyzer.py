@@ -77,8 +77,13 @@ class Analyzer:
         ticker = ticker.replace('@', '.')
         url = r'https://query1.finance.yahoo.com/v10/finance/quoteSummary/{0}?modules=financialData'.format(
             ticker)
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; '
+                                 'Win64; x64) AppleWebKit/537.36 '
+                                 '(KHTML, like Gecko) '
+                                 'Chrome/83.0.4103.116 '
+                                 'Safari/537.36 OPR/69.0.3686.95'}
 
-        response = requests.get(url)
+        response = requests.get(url, headers=headers)
         data = response.json()['quoteSummary']['result'][0]['financialData']
         rating = data['recommendationMean']['raw']
         low = data['targetLowPrice']['raw']

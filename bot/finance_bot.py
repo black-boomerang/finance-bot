@@ -1,3 +1,5 @@
+# Основной класс бота, запускаемого в bot_worker.py
+
 import os
 
 import plotly.figure_factory as ff
@@ -27,6 +29,7 @@ class FinanceBot(telebot.TeleBot):
             'Помощь',
             callback_data='help')
 
+        # отдельный поток, отвечающий за ежедневную отправку рекомендаций
         self.thread = ScheduleThread(self.send_recommendations, 'cron',
                                      day_of_week='mon-fri', hour=21,
                                      minute=0)
@@ -34,6 +37,9 @@ class FinanceBot(telebot.TeleBot):
 
     @staticmethod
     def _get_recommendations_table(companies):
+        '''
+        Формирование картинки с рекомендованными акциями
+        '''
         companies_df = companies.reset_index()[
             ['index', 'Rating', 'Current Price', 'Average Target']]
         companies_df.columns = ['Тикер', 'Рейтинг', 'Цена', 'Цель']
@@ -46,6 +52,10 @@ class FinanceBot(telebot.TeleBot):
         fig.write_image('companies_table.png', scale=2)
 
     def send_recommendations(self):
+        '''
+        Добавление умной клавиатуры к сообщению и вызов метода базового класса.
+        Используется для отправки ежедневных рекомендаций в ScheduleThread
+        '''
         companies_number = 5
         best_companies = self.analyzer.get_best_companies(companies_number)
         self._get_recommendations_table(best_companies)
@@ -65,6 +75,10 @@ class FinanceBot(telebot.TeleBot):
         os.remove('companies_table.png')
 
     def send_message(self, chat_id, text, buttons=(), **kwargs):
+        '''
+        Добавление умной клавиатуры к сообщению и вызов метода базового класса.
+        Используется для отправки сообщений в bot_worker.py
+        '''
         keyboard = telebot.types.InlineKeyboardMarkup()
         for button_name in buttons:
             keyboard.row(self.keyboard_buttons[button_name])

@@ -1,3 +1,5 @@
+# Менеджер управления базой данных. В базе хранятся данные о подписчиках
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 

@@ -1,3 +1,5 @@
+# Класс, отвечающий за анализ показателей компаний и формирование рейтинга акций
+
 import os
 from datetime import datetime, timedelta
 
@@ -19,6 +21,10 @@ class Analyzer:
 
     @staticmethod
     def _get_ranks_dict(order_filter, table_type, param):
+        '''
+        Формирование рейтинга компаний по финансовому показателю (order_filter).
+        Последовательный "просмотр" страниц сайта finviz.com при помощи BeautifulSoup
+        '''
         start_url = 'https://finviz.com/screener.ashx?v=1' + str(
             table_type) + '1ft=3&o={}&r='.format(order_filter)
         ranks = dict()
@@ -51,6 +57,9 @@ class Analyzer:
         return ranks, params
 
     def _get_new_ranking(self):
+        '''
+        Формирование рейтинга компаний по финансовым показателям P/E и ROE
+        '''
         white_list = pd.read_excel(
             os.path.join('resources', 'white_list.xlsx'))
         tickers = white_list['Торговый код'].to_list()
@@ -74,6 +83,10 @@ class Analyzer:
 
     @staticmethod
     def _get_quote_estimation(ticker):
+        '''
+        Получение текущей цены и прогнозов на цену акции, а также значения "привлекательности"
+        этой акции для покупки по версии yahoo
+        '''
         ticker = ticker.replace('@', '.')
         url = r'https://query1.finance.yahoo.com/v10/finance/quoteSummary/{0}?modules=financialData'.format(
             ticker)
@@ -94,6 +107,9 @@ class Analyzer:
         return [rating, low, current, average, high]
 
     def _get_estimation(self, tickers):
+        '''
+        Получение текущих цен и прогнозов на цены акций для заданных тикеров
+        '''
         columns = ['Rating', 'Low Target', 'Current Price', 'Average Target',
                    'High Target']
         estimation = pd.DataFrame(index=tickers, columns=columns)
@@ -108,18 +124,27 @@ class Analyzer:
         return estimation
 
     def _get_candidates(self, companies_number=30):
+        '''
+        Отбор самых недооценённых акций, рекомендованных для покупки
+        '''
         recent_date = datetime.today()
         weekday = recent_date.weekday()
         recent_date -= timedelta((weekday > 4) + (weekday > 5))
         filename = self._get_ranking_filename(recent_date)
 
+        # формирование таблицы происходит только по будням
         if datetime.today().weekday() <= 4:
+            # ранжирование акций по показателям P/E и ROE
             ranking = self._get_new_ranking()
             primaries_number = companies_number * 4
             primary_companies = ranking.head(primaries_number).index.to_list()
+
+            # получение прогнозов на акции по версии аналитиков
             estimation = self._get_estimation(primary_companies)
             ranking = pd.concat([ranking, estimation], axis=1)
             ranking.to_csv(filename)
+
+            # загрузка таблицы в облако
             self.cloud_manager.upload_to_cloud(filename)
         else:
             self.cloud_manager.download_from_cloud(filename)
@@ -131,5 +156,8 @@ class Analyzer:
             companies_number)
 
     def get_best_companies(self, companies_number=5):
+        '''
+        Определение лучших для покупки акций по версии анализатор
+        '''
         candidates = self._get_candidates(companies_number * 6)
         return candidates.dropna().sort_values('Rating').head(companies_number)

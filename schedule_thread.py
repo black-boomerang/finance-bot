@@ -1,3 +1,5 @@
+# Класс scheduler'а для вызова функции в запланированное время. Работает в отдельном потоке
+
 from threading import Thread
 
 from apscheduler.schedulers.blocking import BlockingScheduler

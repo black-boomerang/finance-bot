@@ -1,3 +1,5 @@
+# Загрузка необходимых ID и токенов
+
 import os
 
 CLOUDCUBE_ACCESS_KEY_ID = os.getenv('CLOUDCUBE_ACCESS_KEY_ID')

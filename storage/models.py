@@ -1,3 +1,5 @@
+# Модели для базы данных
+
 from sqlalchemy import Column, Integer, String, Boolean, Time
 from sqlalchemy.ext.declarative import declarative_base
 

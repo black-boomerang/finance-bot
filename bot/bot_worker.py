@@ -1,3 +1,5 @@
+# Этот файл определяет точку входа в приложение. В нём происходит запуск бота
+
 import settings
 from bot.finance_bot import FinanceBot
 

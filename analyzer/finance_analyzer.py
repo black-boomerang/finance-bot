@@ -110,10 +110,10 @@ class Analyzer:
     def _get_candidates(self, companies_number=30):
         recent_date = datetime.today()
         weekday = recent_date.weekday()
-        recent_date -= timedelta((weekday > 6) + (weekday > 7))
+        recent_date -= timedelta((weekday > 4) + (weekday > 5))
         filename = self._get_ranking_filename(recent_date)
 
-        if datetime.today().weekday() <= 6:
+        if datetime.today().weekday() <= 4:
             ranking = self._get_new_ranking()
             primaries_number = companies_number * 4
             primary_companies = ranking.head(primaries_number).index.to_list()

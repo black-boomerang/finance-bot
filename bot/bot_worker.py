@@ -47,6 +47,7 @@ if __name__ == '__main__':
     @bot.message_handler(commands=['unsubscribe'])
     def unsubscribe_command(message):
         print(message)
+        print(message.from_user)
         bot.database_manager.unsubscribe_from_recommendations(
             message.from_user.id)
         bot.send_message(

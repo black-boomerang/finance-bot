@@ -29,7 +29,7 @@ class DatabaseManager:
             self.session.add(new_user)
             self.session.commit()
         except:
-            print('Подписчик уже есть в таблице')
+            print(f'Подписчик {subscriber_id} уже есть в таблице')
             self.session.rollback()
             return False
         return True
@@ -41,7 +41,7 @@ class DatabaseManager:
             self.session.delete(user)
             self.session.commit()
         except:
-            print('Такого подписчика нет в таблице')
+            print(f'Подписчика {subscriber_id} нет в таблице')
             self.session.rollback()
 
     def subscribe_to_recommendations(self, subscriber_id):
@@ -51,17 +51,20 @@ class DatabaseManager:
             user.recommendations = True
             self.session.commit()
         except:
-            print('Такого подписчика нет в таблице')
+            print(f'Подписчика {subscriber_id} нет в таблице')
             self.session.rollback()
 
     def unsubscribe_from_recommendations(self, subscriber_id):
         try:
             user = self.session.query(User).filter(
                 User.user_id == subscriber_id).first()
+            print('ok1')
             user.recommendations = False
+            print('ok2')
             self.session.commit()
+            print('ok3')
         except:
-            print('Такого подписчика нет в таблице')
+            print(f'Подписчика {subscriber_id} нет в таблице')
             self.session.rollback()
 
     def get_subscribers(self):

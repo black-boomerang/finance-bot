@@ -58,11 +58,8 @@ class DatabaseManager:
         try:
             user = self.session.query(User).filter(
                 User.user_id == subscriber_id).first()
-            print('ok1')
             user.recommendations = False
-            print('ok2')
             self.session.commit()
-            print('ok3')
         except:
             print(f'Подписчика {subscriber_id} нет в таблице')
             self.session.rollback()

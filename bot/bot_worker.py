@@ -10,12 +10,12 @@ if __name__ == '__main__':
     @bot.message_handler(commands=['start'])
     def start_message(message):
         is_added = bot.database_manager.insert_subscriber(
-            message.from_user.id,
-            message.from_user.first_name,
+            message.chat.id,
+            message.chat.first_name,
             message.chat.id, True)
         if not is_added:
             bot.database_manager.subscribe_to_recommendations(
-                message.from_user.id)
+                message.chat.id)
         bot.send_message(message.chat.id,
                          'Привет, ты подписался на мои инвестиционные рекомендации. '
                          'Чтобы посмотреть, что я умею, набери /help',
@@ -36,7 +36,7 @@ if __name__ == '__main__':
     @bot.message_handler(commands=['subscribe'])
     def subscribe_command(message):
         bot.database_manager.subscribe_to_recommendations(
-            message.from_user.id)
+            message.chat.id)
         bot.send_message(
             message.chat.id,
             'Ты подписался на инвестиционные рекомендации',
@@ -46,10 +46,8 @@ if __name__ == '__main__':
 
     @bot.message_handler(commands=['unsubscribe'])
     def unsubscribe_command(message):
-        print(message)
-        print(message.from_user)
         bot.database_manager.unsubscribe_from_recommendations(
-            message.from_user.id)
+            message.chat.id)
         bot.send_message(
             message.chat.id,
             'Ты отписался от инвестиционных рекомендаций',

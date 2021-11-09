@@ -31,7 +31,7 @@ plotly==4.14.3
 prettytable==0.7.2
 psutil==5.8.0
 psycopg2==2.8.5
-pyee==7.0.2
+pyee==8.1.0
 pyparsing==2.4.7
 pyppeteer==0.2.6
 pyquery==1.4.1

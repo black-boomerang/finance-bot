@@ -143,12 +143,15 @@ class Analyzer:
 
         # формирование таблицы происходит только по будням
         if datetime.today().weekday() <= 4:
+            # получение предыдущей таблицы для обработки
+            # ошибок при формировании новой
             previous_date = recent_date - timedelta(1)
             weekday = previous_date.weekday()
             previous_date -= timedelta((weekday > 4) + (weekday > 5))
             old_filename = self._get_ranking_filename(previous_date)
             self.cloud_manager.download_from_cloud(old_filename)
-            old_ranking = pd.read_csv(filename, index_col=0)
+            old_ranking = pd.read_csv(old_filename, index_col=0)
+            os.remove(old_filename)
 
             # ранжирование акций по показателям P/E и ROE
             ranking = self._get_new_ranking(old_ranking)

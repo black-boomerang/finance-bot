@@ -28,7 +28,7 @@ class Analyzer:
         Формирование рейтинга компаний по финансовому показателю (order_filter).
         Последовательный "просмотр" страниц сайта finviz.com при помощи BeautifulSoup
         '''
-        start_url = 'https://finviz.com/screener.ashx?v=161' + str(
+        start_url = 'https://finviz.com/screener.ashx?v=1' + str(
             table_type) + '1&o={}&r='.format(order_filter)
         ranks = dict()
         params = dict()

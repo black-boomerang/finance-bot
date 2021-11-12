@@ -1,6 +1,7 @@
 # Класс, отвечающий за анализ показателей компаний и формирование рейтинга акций
 
 import os
+import time
 from datetime import datetime, timedelta
 
 import numpy as np
@@ -25,38 +26,45 @@ class Analyzer:
         Формирование рейтинга компаний по финансовому показателю (order_filter).
         Последовательный "просмотр" страниц сайта finviz.com при помощи BeautifulSoup
         '''
-        start_url = 'https://finviz.com/screener.ashx?v=1' + str(
-            table_type) + '1ft=3&o={}&r='.format(order_filter)
+        start_url = 'https://finviz.com/screener.ashx?v=161' + str(
+            table_type) + '1&o={}&r='.format(order_filter)
         ranks = dict()
         params = dict()
 
-        for i in range(1, 7531, 20):
+        for i in range(1, 8389, 20):
             if i % 400 == 1:
-                print(i * 100 // 7531, '%')
+                print(i * 100 // 8389, '%')
 
             url = start_url + str(i)
             headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; '
                                      'Win64; x64) AppleWebKit/537.36 '
                                      '(KHTML, like Gecko) '
-                                     'Chrome/83.0.4103.116 '
-                                     'Safari/537.36 OPR/69.0.3686.95'}
-            page = requests.get(url, headers=headers)
+                                     'Chrome/92.0.4515.131 '
+                                     'Safari/537.36 OPR/78.0.4093.147'}
 
-            soup = BeautifulSoup(page.text, 'lxml')
-            try:
-                tbl = soup.find('table', bgcolor='#d3d3d3')
-                rows = tbl.findAll('tr', valign='top')
-                for row in rows:
-                    tds = row.findAll('td')
-                    ranks[tds[1].text] = int(tds[0].text)
-                    params[tds[1].text] = float(
-                        tds[param].text.strip('%') + '0')
-            except:
-                pass
+            for attempt in range(3):
+                page = requests.get(url, headers=headers)
+                soup = BeautifulSoup(page.text, 'lxml')
+                try:
+                    tbl = soup.find('table', bgcolor='#d3d3d3')
+                    rows = tbl.findAll('tr', valign='top')
+                    for row in rows:
+                        tds = row.findAll('td')
+                        ranks[tds[1].text] = int(tds[0].text)
+                        string_value = tds[param].text.strip('%')
+                        if string_value == '-':
+                            string_value = 'NaN'
+                        params[tds[1].text] = float(string_value)
+                    break
+                except:
+                    if attempt == 2:
+                        print(f'Ошибка на стороне finviz: {page.text}')
+                    else:
+                        time.sleep(60)
 
         return ranks, params
 
-    def _get_new_ranking(self):
+    def _get_new_ranking(self, old_ranking=None):
         '''
         Формирование рейтинга компаний по финансовым показателям P/E и ROE
         '''
@@ -68,7 +76,7 @@ class Analyzer:
         roe_ranks, roe = self._get_ranks_dict('-roe', 6, 5)
 
         ep_rang_series = pd.Series(pe_ranks, name='E/P rang')
-        ep_series = (1 / pd.Series(pe, name='E/P (%)')) * 100
+        ep_series = (100 / pd.Series(pe, name='E/P (%)'))
         roe_rang_series = pd.Series(roe_ranks, name='ROE rang')
         roe_series = pd.Series(roe, name='ROE (%)')
 
@@ -79,6 +87,7 @@ class Analyzer:
         need_tickers_ranks = ranks.loc[ranks.index.intersection(tickers)]
         idx = np.unique(need_tickers_ranks.index, return_index=True)[1]
         need_tickers_ranks = need_tickers_ranks.iloc[idx]
+        need_tickers_ranks = need_tickers_ranks.combine_first(old_ranking)
         return need_tickers_ranks.sort_values('Summary rang')
 
     @staticmethod
@@ -93,8 +102,8 @@ class Analyzer:
         headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; '
                                  'Win64; x64) AppleWebKit/537.36 '
                                  '(KHTML, like Gecko) '
-                                 'Chrome/83.0.4103.116 '
-                                 'Safari/537.36 OPR/69.0.3686.95'}
+                                 'Chrome/92.0.4515.131 '
+                                 'Safari/537.36 OPR/78.0.4093.147'}
 
         response = requests.get(url, headers=headers)
         data = response.json()['quoteSummary']['result'][0]['financialData']
@@ -134,8 +143,15 @@ class Analyzer:
 
         # формирование таблицы происходит только по будням
         if datetime.today().weekday() <= 4:
+            previous_date = recent_date - timedelta(1)
+            weekday = previous_date.weekday()
+            previous_date -= timedelta((weekday > 4) + (weekday > 5))
+            old_filename = self._get_ranking_filename(previous_date)
+            self.cloud_manager.download_from_cloud(old_filename)
+            old_ranking = pd.read_csv(filename, index_col=0)
+
             # ранжирование акций по показателям P/E и ROE
-            ranking = self._get_new_ranking()
+            ranking = self._get_new_ranking(old_ranking)
             primaries_number = companies_number * 4
             primary_companies = ranking.head(primaries_number).index.to_list()
 

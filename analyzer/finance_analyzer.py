@@ -44,7 +44,7 @@ class Analyzer:
                                      'Chrome/92.0.4515.131 '
                                      'Safari/537.36 OPR/78.0.4093.147'}
 
-            for attempt in range(3):
+            for attempt in range(4):
                 page = requests.get(url, headers=headers)
                 soup = BeautifulSoup(page.text, 'lxml')
                 try:
@@ -59,10 +59,10 @@ class Analyzer:
                         params[tds[1].text] = float(string_value)
                     break
                 except:
-                    if attempt == 2:
+                    if attempt == 3:
                         print(f'Ошибка на стороне finviz: {page.text}')
                     else:
-                        time.sleep(60)
+                        time.sleep((attempt + 1) * 15)
 
         return ranks, params
 

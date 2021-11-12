@@ -15,6 +15,8 @@ from storage import CloudManager
 class Analyzer:
     def __init__(self):
         self.cloud_manager = CloudManager()
+        self.yahoo_columns = ['Rating', 'Low Target', 'Current Price',
+                              'Average Target', 'High Target']
 
     @staticmethod
     def _get_ranking_filename(date):
@@ -119,9 +121,7 @@ class Analyzer:
         '''
         Получение текущих цен и прогнозов на цены акций для заданных тикеров
         '''
-        columns = ['Rating', 'Low Target', 'Current Price', 'Average Target',
-                   'High Target']
-        estimation = pd.DataFrame(index=tickers, columns=columns)
+        estimation = pd.DataFrame(index=tickers, columns=self.yahoo_columns)
         for ticker in tickers:
             for i in range(5):
                 try:
@@ -151,6 +151,7 @@ class Analyzer:
             old_filename = self._get_ranking_filename(previous_date)
             self.cloud_manager.download_from_cloud(old_filename)
             old_ranking = pd.read_csv(old_filename, index_col=0)
+            old_ranking = old_ranking.drop(self.yahoo_columns, axis=1)
             os.remove(old_filename)
 
             # ранжирование акций по показателям P/E и ROE

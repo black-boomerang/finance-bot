@@ -90,22 +90,22 @@ class DatabaseManager:
             print(f'Тикера {ticker} нет в таблице')
             return None
 
-    def insert_update_share_info(self, ticker, pe, roe, price, yahoo_rating,
+    def insert_update_share_info(self, ticker, ep, roe, price, yahoo_rating,
                                  low_target, avg_target, high_target):
         try:
             share_info = self.session.query(ShareInfo).filter(
                 ShareInfo.ticker == ticker).first()
-            share_info.pe = pe
+            share_info.ep = ep
             share_info.roe = roe
             share_info.price = price
             share_info.yahoo_rating = yahoo_rating
             share_info.low_target = low_target
-            share_info.low_target = avg_target
-            share_info.low_target = high_target
+            share_info.avg_target = avg_target
+            share_info.high_target = high_target
         # тикера ещё нет в таблице
         except:
             self.session.rollback()
-            share_info = ShareInfo(ticker, pe, roe, yahoo_rating, price,
+            share_info = ShareInfo(ticker, ep, roe, yahoo_rating, price,
                                    low_target, avg_target, high_target)
             self.session.add(share_info)
         self.session.commit()

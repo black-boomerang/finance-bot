@@ -28,7 +28,7 @@ class ShareInfo(Base):
     __tablename__ = 'shares_info'
 
     ticker = Column(String, primary_key=True)
-    pe = Column(Float, default=0.0, nullable=False)
+    ep = Column(Float, default=0.0, nullable=False)
     roe = Column(Float, default=0.0, nullable=False)
     yahoo_rating = Column(Float, default=5.0, nullable=False)
     price = Column(Float, default=0.0, nullable=False)
@@ -36,10 +36,10 @@ class ShareInfo(Base):
     avg_target = Column(Float, default=0.0, nullable=False)
     high_target = Column(Float, default=0.0, nullable=False)
 
-    def __init__(self, ticker, pe=0.0, roe=0.0, yahoo_rating=5.0, price=0.0,
+    def __init__(self, ticker, ep=0.0, roe=0.0, yahoo_rating=5.0, price=0.0,
                  low_target=0.0, avg_target=0.0, high_target=0.0):
         self.ticker = ticker
-        self.pe = pe
+        self.ep = ep
         self.roe = roe
         self.yahoo_rating = yahoo_rating
         self.price = price

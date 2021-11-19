@@ -138,10 +138,11 @@ class Analyzer:
         '''
         for ticker, row in ranking.iterrows():
             self.database_manager \
-                .insert_update_share_info(ticker, row['pe'], row['roe'],
-                                          row['price'], row['yahoo_rating'],
-                                          row['low_target'], row['avg_target'],
-                                          row['high_target'])
+                .insert_update_share_info(ticker, row['E/P (%)'],
+                                          row['ROE (%)'], row['Current Price'],
+                                          row['Rating'], row['Low Target'],
+                                          row['Average Target'],
+                                          row['High Target'])
 
     def _get_candidates(self, companies_number=30):
         '''

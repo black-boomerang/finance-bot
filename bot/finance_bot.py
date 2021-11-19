@@ -14,7 +14,7 @@ class FinanceBot(telebot.TeleBot):
     def __init__(self, token):
         super().__init__(token)
         self.database_manager = DatabaseManager()
-        self.analyzer = Analyzer()
+        self.analyzer = Analyzer(self.database_manager)
 
         self.keyboard_buttons = dict()
         self.keyboard_buttons[
@@ -35,8 +35,8 @@ class FinanceBot(telebot.TeleBot):
 
         # отдельный поток, отвечающий за ежедневную отправку рекомендаций
         self.thread = ScheduleThread(self.send_recommendations, 'cron',
-                                     day_of_week='mon-fri', hour=21,
-                                     minute=0)
+                                     day_of_week='mon-fri', hour=23,
+                                     minute=59)
         self.thread.start()
 
     @staticmethod

@@ -13,7 +13,8 @@ from storage import CloudManager
 
 
 class Analyzer:
-    def __init__(self):
+    def __init__(self, database_manager):
+        self.database_manager = database_manager
         self.cloud_manager = CloudManager()
         self.yahoo_columns = ['Rating', 'Low Target', 'Current Price',
                               'Average Target', 'High Target']
@@ -126,11 +127,21 @@ class Analyzer:
             for i in range(5):
                 try:
                     estimation.loc[ticker] = self._get_quote_estimation(ticker)
-                    print(ticker + ' is analyzed')
                     break
                 except Exception:
                     pass
         return estimation
+
+    def _save_info_to_database(self, ranking):
+        '''
+        Сохранение информации об акциях в базу
+        '''
+        for ticker, row in ranking.iterrows():
+            self.database_manager \
+                .insert_update_share_info(ticker, row['pe'], row['roe'],
+                                          row['price'], row['yahoo_rating'],
+                                          row['low_target'], row['avg_target'],
+                                          row['high_target'])
 
     def _get_candidates(self, companies_number=30):
         '''
@@ -162,6 +173,9 @@ class Analyzer:
             estimation = self._get_estimation(tickers)
             ranking = pd.concat([ranking, estimation], axis=1)
             ranking.to_csv(filename)
+
+            # сохранение информации в базу
+            self._save_info_to_database(ranking)
 
             # загрузка таблицы в облако
             self.cloud_manager.upload_to_cloud(filename)

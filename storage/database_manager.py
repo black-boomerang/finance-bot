@@ -71,13 +71,41 @@ class DatabaseManager:
         return users
 
     def get_subscriber_by_id(self, subscriber_id):
-        user = self.session.query(User).filter(
-            User.user_id == subscriber_id).first().__dict__
-        user.pop('_sa_instance_state')
-        return user
+        try:
+            user = self.session.query(User).filter(
+                User.user_id == subscriber_id).first().__dict__
+            user.pop('_sa_instance_state')
+            return user
+        except:
+            print(f'Подписчика {subscriber_id} нет в таблице')
+            return None
 
     def get_share_info(self, ticker):
-        share_info = self.session.query(ShareInfo).filter(
-            ShareInfo.ticker == ticker).first().__dict__
-        share_info.pop('_sa_instance_state')
-        return share_info
+        try:
+            share_info = self.session.query(ShareInfo).filter(
+                ShareInfo.ticker == ticker).first().__dict__
+            share_info.pop('_sa_instance_state')
+            return share_info
+        except:
+            print(f'Тикера {ticker} нет в таблице')
+            return None
+
+    def insert_update_share_info(self, ticker, pe, roe, price, yahoo_rating,
+                                 low_target, avg_target, high_target):
+        try:
+            share_info = self.session.query(ShareInfo).filter(
+                ShareInfo.ticker == ticker).first()
+            share_info.pe = pe
+            share_info.roe = roe
+            share_info.price = price
+            share_info.yahoo_rating = yahoo_rating
+            share_info.low_target = low_target
+            share_info.low_target = avg_target
+            share_info.low_target = high_target
+        # тикера ещё нет в таблице
+        except:
+            self.session.rollback()
+            share_info = ShareInfo(ticker, pe, roe, yahoo_rating, price,
+                                   low_target, avg_target, high_target)
+            self.session.add(share_info)
+        self.session.commit()

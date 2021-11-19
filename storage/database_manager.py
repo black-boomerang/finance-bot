@@ -4,7 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 import settings
-from storage.models import Base, User
+from storage.models import Base, User, ShareInfo
 
 
 class DatabaseManager:
@@ -75,3 +75,9 @@ class DatabaseManager:
             User.user_id == subscriber_id).first().__dict__
         user.pop('_sa_instance_state')
         return user
+
+    def get_share_info(self, ticker):
+        share_info = self.session.query(ShareInfo).filter(
+            ShareInfo.ticker == ticker).first().__dict__
+        share_info.pop('_sa_instance_state')
+        return share_info

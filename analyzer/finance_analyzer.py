@@ -156,11 +156,10 @@ class Analyzer:
 
             # ранжирование акций по показателям P/E и ROE
             ranking = self._get_new_ranking(old_ranking)
-            primaries_number = companies_number * 4
-            primary_companies = ranking.head(primaries_number).index.to_list()
+            tickers = ranking.index.to_list()
 
             # получение прогнозов на акции по версии аналитиков
-            estimation = self._get_estimation(primary_companies)
+            estimation = self._get_estimation(tickers)
             ranking = pd.concat([ranking, estimation], axis=1)
             ranking.to_csv(filename)
 

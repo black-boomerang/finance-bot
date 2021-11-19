@@ -28,6 +28,10 @@ class FinanceBot(telebot.TeleBot):
         self.keyboard_buttons['help'] = telebot.types.InlineKeyboardButton(
             'Помощь',
             callback_data='help')
+        self.keyboard_buttons[
+            'get_share_info'] = telebot.types.InlineKeyboardButton(
+            'Информация об акции',
+            callback_data='get_share_info')
 
         # отдельный поток, отвечающий за ежедневную отправку рекомендаций
         self.thread = ScheduleThread(self.send_recommendations, 'cron',
@@ -82,4 +86,5 @@ class FinanceBot(telebot.TeleBot):
         keyboard = telebot.types.InlineKeyboardMarkup()
         for button_name in buttons:
             keyboard.row(self.keyboard_buttons[button_name])
-        super().send_message(chat_id, text, reply_markup=keyboard, **kwargs)
+        return super().send_message(chat_id, text, reply_markup=keyboard,
+                                    **kwargs)

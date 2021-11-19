@@ -35,7 +35,7 @@ class FinanceBot(telebot.TeleBot):
 
         # отдельный поток, отвечающий за ежедневную отправку рекомендаций
         self.thread = ScheduleThread(self.send_recommendations, 'cron',
-                                     hour=0,
+                                     hour=2,
                                      minute=40)
         self.thread.start()
 

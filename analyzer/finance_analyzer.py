@@ -150,11 +150,11 @@ class Analyzer:
         '''
         recent_date = datetime.today()
         weekday = recent_date.weekday()
-        recent_date -= timedelta((weekday > 4) + (weekday > 5))
+        recent_date -= timedelta((weekday > 6) + (weekday > 7))
         filename = self._get_ranking_filename(recent_date)
 
         # формирование таблицы происходит только по будням
-        if datetime.today().weekday() <= 4:
+        if datetime.today().weekday() <= 6:
             # получение предыдущей таблицы для обработки
             # ошибок при формировании новой
             previous_date = recent_date - timedelta(1)

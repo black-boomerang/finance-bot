@@ -80,7 +80,7 @@ if __name__ == '__main__':
                 share_info['roe'], share_info['low_target'],
                 share_info['avg_target'], share_info['high_target'],
                 share_info['yahoo_rating'])
-            answer_text = '<b>Тикер:</b> {}\n`Цена:` {}\n' \
+            answer_text = '<b>Тикер:</b> {}\n<b>Цена:</b> {}\n' \
                           '<b>P/E:</b> {:.2f}%\n<b>ROE:</b> {:.2f}%\n' \
                           '<b>Средний прогноз:</b> {}\n' \
                           '<b>Минимальный прогноз:</b> {}\n' \

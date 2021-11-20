@@ -71,20 +71,21 @@ if __name__ == '__main__':
         ticker = message.text.strip().upper()
         share_info = bot.database_manager.get_share_info(ticker)
         ordered_info = (
-            share_info['ticker'], share_info['price'], share_info['ep'] * 100,
-            share_info['roe'] * 100, share_info['low_target'],
+            share_info['ticker'], share_info['price'], share_info['ep'],
+            share_info['roe'], share_info['low_target'],
             share_info['avg_target'], share_info['high_target'],
             share_info['yahoo_rating'])
         answer_text = '`Тикер:` {}\n`Цена:` {}\n' \
-                      '`P/E:` {:2f}%\n`ROE:` {:2f}%\n' \
+                      '`P/E:` {.2f}%\n`ROE:` {.2f}%\n' \
                       '`Средний прогноз:` {}\n`Минимальный прогноз:` {}\n' \
-                      '`Максимальный прогноз:` {}\n `Рейтинг YAHOO`:' \
+                      '`Максимальный прогноз:` {}\n `Рейтинг YAHOO`: {}' \
                       ''.format(*ordered_info)
         # TODO:  subscribe_recommends/unsubscribe_recommends в зависимости от пользователя
         bot.send_message(
             message.chat.id,
             answer_text,
-            ('get_share_info', 'unsubscribe_recommends', 'help')
+            ('get_share_info', 'unsubscribe_recommends', 'help'),
+            parse_mode='HTML'
         )
 
 

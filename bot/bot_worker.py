@@ -80,10 +80,12 @@ if __name__ == '__main__':
                 share_info['roe'], share_info['low_target'],
                 share_info['avg_target'], share_info['high_target'],
                 share_info['yahoo_rating'])
-            answer_text = '`Тикер:` {}\n`Цена:` {}\n' \
-                          '`P/E:` {:.2f}%\n`ROE:` {:.2f}%\n' \
-                          '`Средний прогноз:` {}\n`Минимальный прогноз:` {}\n' \
-                          '`Максимальный прогноз:` {}\n `Рейтинг YAHOO`: {}' \
+            answer_text = '<b>Тикер:</b> {}\n`Цена:` {}\n' \
+                          '<b>P/E:</b> {:.2f}%\n<b>ROE:</b> {:.2f}%\n' \
+                          '<b>Средний прогноз:</b> {}\n' \
+                          '<b>Минимальный прогноз:</b> {}\n' \
+                          '<b>Максимальный прогноз:</b> {}\n' \
+                          '<b>Рейтинг YAHOO:</b> {}' \
                           ''.format(*ordered_info)
 
         # subscribe_recommends/unsubscribe_recommends в зависимости от пользователя
@@ -96,7 +98,7 @@ if __name__ == '__main__':
             message.chat.id,
             answer_text,
             ('get_share_info', recommendations_key, 'help'),
-            parse_mode='Markdown'
+            parse_mode='HTML'
         )
 
 

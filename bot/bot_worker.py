@@ -96,7 +96,7 @@ if __name__ == '__main__':
             message.chat.id,
             answer_text,
             ('get_share_info', recommendations_key, 'help'),
-            parse_mode='HTML'
+            parse_mode='Markdown'
         )
 
 

@@ -5,9 +5,10 @@ from sqlalchemy.orm import sessionmaker
 
 import settings
 from storage.models import Base, User, ShareInfo
+from storage.singleton import SingletonMeta
 
 
-class DatabaseManager:
+class DatabaseManager(metaclass=SingletonMeta):
     def __init__(self, engine=None):
         if engine is None:
             engine = create_engine(settings.DATABASE_URL)

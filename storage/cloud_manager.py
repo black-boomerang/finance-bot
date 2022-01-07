@@ -4,9 +4,10 @@ import boto3
 import botocore
 
 import settings
+from storage.singleton import SingletonMeta
 
 
-class CloudManager:
+class CloudManager(metaclass=SingletonMeta):
     def __init__(self):
         self.s3_client = boto3.client('s3',
                                       aws_access_key_id=settings.CLOUDCUBE_ACCESS_KEY_ID,

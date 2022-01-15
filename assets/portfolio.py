@@ -12,6 +12,7 @@ class Portfolio:
     def __init__(self, filename=None):
         self.shares_table = pd.DataFrame({
             'ticker': pd.Series([], dtype=str),
+            'number': pd.Series([], dtype=np.int),
             'open_price': pd.Series([], dtype=np.float),
             'close_price': pd.Series([], dtype=np.float),
             'open_date': pd.Series([], dtype='datetime64[ns]'),
@@ -32,30 +33,46 @@ class Portfolio:
             print('Недостаточно средств для покупки')
             return False
 
-        row = {'ticker': share_ticker, 'open_price': price,
+        row = {'ticker': share_ticker, 'number': number, 'open_price': price,
                'closed_price': None, 'open_date': purchase_date,
                'closed_date': None, 'is_closed': False}
-        for i in range(number):
-            self.shares_table.append(row)
+        self.shares_table.append(row)
 
         self.free_funds -= cost
         return True
 
     def sell(self, share_ticker, number, price, sale_date=date.today()):
         shares = self.shares_table[self.shares_table['ticker'] == share_ticker]
+        shares = shares[~shares['is_closed']]
 
-        shares_number = shares.shape[0]
+        shares_number = shares['number'].sum()
         if shares_number < number:
             print("В портфеле недостаточно акций. В нём {} акций {}".format(
-                number, share_ticker))
+                shares_number, share_ticker))
             return False
 
-        shares = shares.sort_values(by=['open_date'])
-        shares.loc[:number - 1, 'closed_price'] = price
-        shares.loc[:number - 1, 'closed_date'] = sale_date
-        shares.loc[:number - 1, 'is_closed'] = True
+        shares = shares.sort_values(by=['open_date']).reset_index(drop=True)
+        shares_cumsum = shares['number'].cumsum()
+        sold_shares = (shares_cumsum <= number)
+
+        # если необходимо, делим одну из ячеек на две (проданные и нет)
+        lower_bound = shares_cumsum[sold_shares].iloc[-1]
+        if lower_bound < number:
+            sold_len = sold_shares.sum()
+
+            new_row = shares.loc[sold_len]
+            new_row['number'] = number - lower_bound
+            self.shares_table.append(new_row)
+
+            shares.loc[sold_len, 'number'] -= new_row['number']
+            sold_shares = sold_shares & (shares.index == shares.shape[0] - 1)
+
+        shares[sold_shares]['closed_price'] = price
+        shares[sold_shares]['closed_date'] = sale_date
+        shares[sold_shares]['is_closed'] = True
+
         others = self.shares_table[self.shares_table['ticker'] != share_ticker]
-        self.shares_table = pd.concat([others, shares])
+        self.shares_table = pd.concat([others, shares]).reset_index(drop=True)
         self.free_funds += number * price
         return True
 
@@ -101,7 +118,9 @@ class Portfolio:
         all_funds = self.free_funds
         for i, share in self.shares_table.iterrows():
             ticker = share['ticker']
-            all_funds += self.database_manager.get_share_info(ticker)
+            num = share['number']
+            term = self.database_manager.get_share_info(ticker)['price'] * num
+            all_funds += term
 
         # сохраняем историю стоимости портфеля
         self.history[date.today()] = all_funds

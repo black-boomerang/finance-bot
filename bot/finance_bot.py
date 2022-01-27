@@ -16,6 +16,7 @@ class FinanceBot(telebot.TeleBot):
         self.database_manager = DatabaseManager()
         self.analyzer = Analyzer(self.database_manager)
 
+        # кнопки умной клавиатуры
         self.keyboard_buttons = dict()
         self.keyboard_buttons[
             'subscribe_recommends'] = telebot.types.InlineKeyboardButton(
@@ -41,9 +42,9 @@ class FinanceBot(telebot.TeleBot):
 
     @staticmethod
     def _get_recommendations_table(companies):
-        '''
+        """
         Формирование картинки с рекомендованными акциями
-        '''
+        """
         companies_df = companies.reset_index()[
             ['index', 'Rating', 'Current Price', 'Average Target']]
         companies_df.columns = ['Тикер', 'Рейтинг', 'Цена', 'Цель']
@@ -55,13 +56,20 @@ class FinanceBot(telebot.TeleBot):
         )
         fig.write_image('companies_table.png', scale=2)
 
-    def send_recommendations(self):
-        '''
+    def update_recommendations(self):
+        """
+        Запуск анализатора и отправка рекомендаций подписчикам,
+        если рекомендации изменились
+        """
+        best_companies, is_changed = self.analyzer.get_best_companies(5)
+        if is_changed:
+            self.send_recommendations(best_companies)
+
+    def send_recommendations(self, best_companies):
+        """
         Добавление умной клавиатуры к сообщению и вызов метода базового класса.
-        Используется для отправки ежедневных рекомендаций в ScheduleThread
-        '''
-        companies_number = 5
-        best_companies = self.analyzer.get_best_companies(companies_number)
+        Используется для отправки рекомендаций
+        """
         self._get_recommendations_table(best_companies)
         recommendations_text = '`Список самых недооценённых акций на ' \
                                'Санкт-Петербуржской бирже на сегодняшний ' \
@@ -79,10 +87,10 @@ class FinanceBot(telebot.TeleBot):
         os.remove('companies_table.png')
 
     def send_message(self, chat_id, text, buttons=(), **kwargs):
-        '''
+        """
         Добавление умной клавиатуры к сообщению и вызов метода базового класса.
         Используется для отправки сообщений в bot_worker.py
-        '''
+        """
         keyboard = telebot.types.InlineKeyboardMarkup()
         for button_name in buttons:
             keyboard.row(self.keyboard_buttons[button_name])

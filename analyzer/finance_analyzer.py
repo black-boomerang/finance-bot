@@ -19,16 +19,26 @@ class Analyzer:
         self.yahoo_columns = ['Rating', 'Low Target', 'Current Price',
                               'Average Target', 'High Target']
 
+        # получение последней таблицы с данными
+        last_date = datetime.today()
+        filename = self._get_ranking_filename(last_date)
+        while not self.cloud_manager.download_from_cloud(filename):
+            last_date -= timedelta(1)
+            filename = self._get_ranking_filename(last_date)
+        last_ranking = pd.read_csv(filename, index_col=0)
+        self.last_ranking = last_ranking.drop(self.yahoo_columns, axis=1)
+        os.remove(filename)
+
     @staticmethod
     def _get_ranking_filename(date):
         return 'ordered_ranks_' + date.strftime('%Y_%m_%d') + '.csv'
 
     @staticmethod
     def _get_ranks_dict(order_filter, table_type, param):
-        '''
+        """
         Формирование рейтинга компаний по финансовому показателю (order_filter).
         Последовательный "просмотр" страниц сайта finviz.com при помощи BeautifulSoup
-        '''
+        """
         start_url = 'https://finviz.com/screener.ashx?v=1' + str(
             table_type) + '1&o={}&r='.format(order_filter)
         ranks = dict()
@@ -67,10 +77,10 @@ class Analyzer:
 
         return ranks, params
 
-    def _get_new_ranking(self, old_ranking=None):
-        '''
+    def _get_new_ranking(self):
+        """
         Формирование рейтинга компаний по финансовым показателям P/E и ROE
-        '''
+        """
         white_list = pd.read_excel(
             os.path.join('resources', 'white_list.xlsx'))
         tickers = white_list['Торговый код'].to_list()
@@ -90,15 +100,15 @@ class Analyzer:
         need_tickers_ranks = ranks.loc[ranks.index.intersection(tickers)]
         idx = np.unique(need_tickers_ranks.index, return_index=True)[1]
         need_tickers_ranks = need_tickers_ranks.iloc[idx]
-        need_tickers_ranks = need_tickers_ranks.combine_first(old_ranking)
+        need_tickers_ranks = need_tickers_ranks.combine_first(self.last_ranking)
         return need_tickers_ranks.sort_values('Summary rang')
 
     @staticmethod
     def _get_quote_estimation(ticker):
-        '''
+        """
         Получение текущей цены и прогнозов на цену акции, а также значения "привлекательности"
         этой акции для покупки по версии yahoo
-        '''
+        """
         ticker = ticker.replace('@', '.')
         url = r'https://query1.finance.yahoo.com/v10/finance/quoteSummary/{0}?modules=financialData'.format(
             ticker)
@@ -119,9 +129,9 @@ class Analyzer:
         return [rating, low, current, average, high]
 
     def _get_estimation(self, tickers):
-        '''
+        """
         Получение текущих цен и прогнозов на цены акций для заданных тикеров
-        '''
+        """
         estimation = pd.DataFrame(index=tickers, columns=self.yahoo_columns)
         for ticker in tickers:
             for i in range(5):
@@ -133,9 +143,9 @@ class Analyzer:
         return estimation
 
     def _save_info_to_database(self, ranking):
-        '''
+        """
         Сохранение информации об акциях в базу
-        '''
+        """
         for ticker, row in ranking.iterrows():
             self.database_manager \
                 .insert_update_share_info(ticker, row['E/P (%)'],
@@ -144,10 +154,11 @@ class Analyzer:
                                           row['Average Target'],
                                           row['High Target'])
 
-    def _get_candidates(self, companies_number=30):
-        '''
-        Отбор самых недооценённых акций, рекомендованных для покупки
-        '''
+    def _get_ranking(self):
+        """
+        Формирование рейтинга компаний по финансовым показателям P/E и ROE
+        и сохранение его в базу
+        """
         recent_date = datetime.today()
         weekday = recent_date.weekday()
         recent_date -= timedelta((weekday > 4) + (weekday > 5))
@@ -155,19 +166,8 @@ class Analyzer:
 
         # формирование таблицы происходит только по будням
         if datetime.today().weekday() <= 4:
-            # получение предыдущей таблицы для обработки
-            # ошибок при формировании новой
-            previous_date = recent_date - timedelta(1)
-            weekday = previous_date.weekday()
-            previous_date -= timedelta((weekday > 4) + (weekday > 5))
-            old_filename = self._get_ranking_filename(previous_date)
-            self.cloud_manager.download_from_cloud(old_filename)
-            old_ranking = pd.read_csv(old_filename, index_col=0)
-            old_ranking = old_ranking.drop(self.yahoo_columns, axis=1)
-            os.remove(old_filename)
-
             # ранжирование акций по показателям P/E и ROE
-            ranking = self._get_new_ranking(old_ranking)
+            ranking = self._get_new_ranking()
             tickers = ranking.index.to_list()
 
             # получение прогнозов на акции по версии аналитиков
@@ -185,13 +185,30 @@ class Analyzer:
             ranking = pd.read_csv(filename, index_col=0)
         os.remove(filename)
 
+        return ranking
+
+    @staticmethod
+    def _selection_function(ranking, companies_number=5):
+        """
+        Функция отбора недооценённых акций
+        """
         return ranking[
             ranking['Current Price'] < ranking['Average Target']].head(
-            companies_number)
+            companies_number * 6).dropna().sort_values(
+            'Rating').head(companies_number)
 
     def get_best_companies(self, companies_number=5):
-        '''
-        Определение лучших для покупки акций по версии анализатор
-        '''
-        candidates = self._get_candidates(companies_number * 6)
-        return candidates.dropna().sort_values('Rating').head(companies_number)
+        """
+        Определение лучших для покупки акций по версии анализатора.
+        Возвращает два значения: первое - лучшие companies_number акций,
+        второе - изменился ли их список по сравнению с предыдущим
+        """
+        ranking = self._get_ranking()
+
+        cur_best = self._selection_function(ranking, companies_number)
+        prev_best = self._selection_function(self.last_ranking,
+                                             companies_number)
+        self.last_ranking = ranking
+
+        is_changed = (set(prev_best.index) == set(cur_best.index))
+        return cur_best, is_changed

@@ -25,8 +25,7 @@ class Analyzer:
         while not self.cloud_manager.download_from_cloud(filename):
             last_date -= timedelta(1)
             filename = self._get_ranking_filename(last_date)
-        last_ranking = pd.read_csv(filename, index_col=0)
-        self.last_ranking = last_ranking.drop(self.yahoo_columns, axis=1)
+        self.last_ranking = pd.read_csv(filename, index_col=0)
         os.remove(filename)
 
     @staticmethod
@@ -100,7 +99,8 @@ class Analyzer:
         need_tickers_ranks = ranks.loc[ranks.index.intersection(tickers)]
         idx = np.unique(need_tickers_ranks.index, return_index=True)[1]
         need_tickers_ranks = need_tickers_ranks.iloc[idx]
-        need_tickers_ranks = need_tickers_ranks.combine_first(self.last_ranking)
+        last_ranking = self.last_ranking.drop(self.yahoo_columns, axis=1)
+        need_tickers_ranks = need_tickers_ranks.combine_first(last_ranking)
         return need_tickers_ranks.sort_values('Summary rang')
 
     @staticmethod

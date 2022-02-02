@@ -4,6 +4,7 @@ import os
 
 import plotly.figure_factory as ff
 import telebot
+from telebot.types import InlineKeyboardButton
 
 from analyzer import Analyzer
 from schedule_thread import ScheduleThread
@@ -14,30 +15,25 @@ class FinanceBot(telebot.TeleBot):
     def __init__(self, token):
         super().__init__(token)
         self.database_manager = DatabaseManager()
-        self.analyzer = Analyzer(self.database_manager)
+        self.analyzer = Analyzer()
 
         # кнопки умной клавиатуры
+        self._buttons_info = {
+            'subscribe_recommends': 'Подписаться на инвестиционные рекомендации',
+            'unsubscribe_recommends': 'Отписаться от инвестиционных рекомендаций',
+            'help': 'Помощь',
+            'get_share_info': 'Информация об акции'
+        }
+        self.callbacks = self._buttons_info.keys()
         self.keyboard_buttons = dict()
-        self.keyboard_buttons[
-            'subscribe_recommends'] = telebot.types.InlineKeyboardButton(
-            'Подписаться на инвестиционные рекомендации',
-            callback_data='subscribe_recommends')
-        self.keyboard_buttons[
-            'unsubscribe_recommends'] = telebot.types.InlineKeyboardButton(
-            'Отписаться от инвестиционных рекомендаций',
-            callback_data='unsubscribe_recommends')
-        self.keyboard_buttons['help'] = telebot.types.InlineKeyboardButton(
-            'Помощь',
-            callback_data='help')
-        self.keyboard_buttons[
-            'get_share_info'] = telebot.types.InlineKeyboardButton(
-            'Информация об акции',
-            callback_data='get_share_info')
+        for callback, text in self._buttons_info.items():
+            self.keyboard_buttons[callback] = InlineKeyboardButton(text,
+                                                                   callback_data=callback)
 
         # отдельный поток, отвечающий за ежедневную отправку рекомендаций
         self.thread = ScheduleThread(self.update_recommendations, 'cron',
                                      day_of_week='mon-fri', hour=21,
-                                     minute=10)
+                                     minute=0)
         self.thread.start()
 
     @staticmethod
@@ -80,8 +76,7 @@ class FinanceBot(telebot.TeleBot):
                 try:
                     with open('companies_table.png', 'rb') as sent_img:
                         self.send_photo(subscriber['chat_id'], sent_img,
-                                        recommendations_text,
-                                        parse_mode='Markdown')
+                                        recommendations_text)
                 except telebot.apihelper.ApiException:
                     pass
         os.remove('companies_table.png')

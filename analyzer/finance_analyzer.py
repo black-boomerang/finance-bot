@@ -8,14 +8,18 @@ import numpy as np
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
+from tqdm import tqdm
 
-from storage import CloudManager
+from assets import Portfolio
+from storage import CloudManager, DatabaseManager
 
 
 class Analyzer:
-    def __init__(self, database_manager):
-        self.database_manager = database_manager
+    def __init__(self):
+        self.database_manager = DatabaseManager()
         self.cloud_manager = CloudManager()
+        self.portfolio = Portfolio()
+
         self.yahoo_columns = ['Rating', 'Low Target', 'Current Price',
                               'Average Target', 'High Target']
 
@@ -43,10 +47,8 @@ class Analyzer:
         ranks = dict()
         params = dict()
 
-        for i in range(1, 8389, 20):
-            if i % 400 == 1:
-                print(i * 100 // 8389, '%')
-
+        print('Загрузка показателей c finviz:')
+        for i in tqdm(range(1, 8389, 20)):
             url = start_url + str(i)
             headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; '
                                      'Win64; x64) AppleWebKit/537.36 '
@@ -133,7 +135,8 @@ class Analyzer:
         Получение текущих цен и прогнозов на цены акций для заданных тикеров
         """
         estimation = pd.DataFrame(index=tickers, columns=self.yahoo_columns)
-        for ticker in tickers:
+        print('Загрузка данных с yahoo:')
+        for ticker in tqdm(tickers):
             for i in range(5):
                 try:
                     estimation.loc[ticker] = self._get_quote_estimation(ticker)
@@ -146,7 +149,8 @@ class Analyzer:
         """
         Сохранение информации об акциях в базу
         """
-        for ticker, row in ranking.iterrows():
+        print('Загрузка данных в базу:')
+        for ticker, row in tqdm(ranking.iterrows()):
             self.database_manager \
                 .insert_update_share_info(ticker, row['E/P (%)'],
                                           row['ROE (%)'], row['Current Price'],
@@ -197,6 +201,36 @@ class Analyzer:
             companies_number * 6).dropna().sort_values(
             'Rating').head(companies_number)
 
+    def update_portfolio(self, best_companies):
+        """
+        Обновление портфеля с учётом изменений в рейтинге акций
+        """
+        # продажа акций, покинувших топ рейтинга
+        tickers_count = 0
+        for ticker, number in self.portfolio.get_shares_dict().items():
+            if ticker not in best_companies.index.tolist():
+                self.portfolio.sell(ticker, number)
+                tickers_count += 1
+
+        # покупка акций, только что попавших в топ рейтинга
+        money_per_ticker = self.portfolio.free_funds / max(tickers_count, 1)
+        for ticker in best_companies.index.tolist():
+            if ticker not in self.portfolio.get_shares_dict().keys():
+                price = self.database_manager.get_share_info(ticker)['price']
+                number = money_per_ticker // price
+
+                # остаток денег перераспределяем между остальными компаниями
+                tickers_count -= 1
+                if tickers_count > 0:
+                    rest = money_per_ticker - price * number
+                    money_per_ticker += rest / tickers_count
+
+                self.portfolio.buy(ticker, number, price)
+
+        # обновляем историю стоимости портфеля и сохраняем его в хранилище
+        self.portfolio.update_history()
+        self.portfolio.save('portfolio_v1.json')
+
     def get_best_companies(self, companies_number=5):
         """
         Определение лучших для покупки акций по версии анализатора.
@@ -209,6 +243,9 @@ class Analyzer:
         prev_best = self._selection_function(self.last_ranking,
                                              companies_number)
         self.last_ranking = ranking
+
+        # обновление портфеля
+        self.update_portfolio(cur_best)
 
         is_changed = (set(prev_best.index) == set(cur_best.index))
         return cur_best, is_changed

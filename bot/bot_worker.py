@@ -76,11 +76,11 @@ if __name__ == '__main__':
                           'торгующиеся на Санкт-Петербуржской бирже'
         else:
             ordered_info = (
-                share_info['ticker'], share_info['price'], share_info['ep'],
-                share_info['roe'], share_info['low_target'],
+                share_info['company_name'], share_info['price'],
+                share_info['ep'], share_info['roe'], share_info['low_target'],
                 share_info['avg_target'], share_info['high_target'],
                 share_info['yahoo_rating'])
-            answer_text = '<b>Тикер:</b> {}\n<b>Цена:</b> {}\n' \
+            answer_text = '<b>Компания:</b> {}\n<b>Цена:</b> {}\n' \
                           '<b>P/E:</b> {:.2f}%\n<b>ROE:</b> {:.2f}%\n' \
                           '<b>Минимальный прогноз:</b> {}\n' \
                           '<b>Средний прогноз:</b> {}\n' \

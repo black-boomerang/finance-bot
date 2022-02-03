@@ -1,5 +1,7 @@
 # Менеджер управления базой данных. В базе хранятся данные о подписчиках
+import os
 
+import pandas as pd
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
@@ -116,4 +118,15 @@ class DatabaseManager(metaclass=SingletonMeta):
                 share_info = ShareInfo(ticker, ep, roe, yahoo_rating, price,
                                        low_target, avg_target, high_target)
                 session.add(share_info)
+
+    def add_companies_names(self):
+        white_list = pd.read_excel(os.path.join('resources', 'white_list.xlsx'))
+        with Session(self.engine) as session:
+            for i, share in white_list.iterrows():
+                ticker = share['Торговый код']
+                company_name = share['Эмитент/инструмент']
+                share_info = session.query(ShareInfo).filter(
+                    ShareInfo.ticker == ticker).first()
+                if share_info is not None:
+                    share_info.company_name = company_name
             session.commit()

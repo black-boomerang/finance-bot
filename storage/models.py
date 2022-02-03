@@ -35,9 +35,11 @@ class ShareInfo(Base):
     low_target = Column(Float, default=0.0, nullable=False)
     avg_target = Column(Float, default=0.0, nullable=False)
     high_target = Column(Float, default=0.0, nullable=False)
+    company_name = Column(String, default='', nullable=False)
 
     def __init__(self, ticker, ep=0.0, roe=0.0, yahoo_rating=5.0, price=0.0,
-                 low_target=0.0, avg_target=0.0, high_target=0.0):
+                 low_target=0.0, avg_target=0.0, high_target=0.0,
+                 company_name=''):
         self.ticker = ticker
         self.ep = ep
         self.roe = roe
@@ -46,3 +48,4 @@ class ShareInfo(Base):
         self.low_target = low_target
         self.avg_target = avg_target
         self.high_target = high_target
+        self.company_name = company_name

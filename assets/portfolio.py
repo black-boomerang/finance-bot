@@ -27,10 +27,8 @@ class Portfolio:
         self.free_funds = 100000.0
         self.cloud_manager = CloudManager()
         self.database_manager = DatabaseManager()
-        '''
         if filename is not None:
             self.load(filename)
-        '''
 
     def buy(self, share_ticker: str, number: int,
             price: tp.Optional[float] = None,

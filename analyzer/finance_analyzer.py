@@ -48,7 +48,7 @@ class Analyzer:
         params = dict()
 
         print('Загрузка показателей c finviz:')
-        for i in tqdm(range(1, 8389, 20)):
+        for i in tqdm(range(1, 8573, 20)):
             url = start_url + str(i)
             headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; '
                                      'Win64; x64) AppleWebKit/537.36 '
@@ -60,7 +60,7 @@ class Analyzer:
                 page = requests.get(url, headers=headers)
                 soup = BeautifulSoup(page.text, 'lxml')
                 try:
-                    tbl = soup.find('table', bgcolor='#d3d3d3')
+                    tbl = soup.find('table', class_='table-light')
                     rows = tbl.findAll('tr', valign='top')
                     for row in rows:
                         tds = row.findAll('td')

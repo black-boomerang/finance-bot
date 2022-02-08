@@ -67,9 +67,9 @@ class FinanceBot(telebot.TeleBot):
         Используется для отправки рекомендаций
         """
         self._get_recommendations_table(best_companies)
-        recommendations_text = '`Список самых недооценённых акций на ' \
+        recommendations_text = 'Список самых недооценённых акций на ' \
                                'Санкт-Петербуржской бирже на сегодняшний ' \
-                               'день`'
+                               'день'
         subscribers = self.database_manager.get_subscribers()
         for subscriber in subscribers:
             if subscriber['recommendations']:

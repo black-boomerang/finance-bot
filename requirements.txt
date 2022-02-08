@@ -26,7 +26,7 @@ openpyxl==3.0.4
 pandas==1.0.5
 parse==1.16.0
 pbr==5.5.1
-Pillow==8.3.2
+Pillow==9.0.1
 plotly==4.14.3
 prettytable==0.7.2
 psutil==5.8.0
@@ -46,8 +46,8 @@ SQLAlchemy==1.4.31
 sqlalchemy-migrate==0.13.0
 sqlparse==0.4.2
 tables==3.6.1
-telebot==0.0.3
-pyTelegramBotAPI==3.7.2
+telebot==0.0.4
+pyTelegramBotAPI==4.4.0
 Tempita==0.5.2
 toolz==0.11.1
 tqdm==4.48.0

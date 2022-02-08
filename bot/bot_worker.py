@@ -81,7 +81,7 @@ if __name__ == '__main__':
                 share_info['avg_target'], share_info['high_target'],
                 share_info['yahoo_rating'])
             answer_text = '<b>Компания:</b> {}\n<b>Цена:</b> {}\n' \
-                          '<b>P/E:</b> {:.2f}%\n<b>ROE:</b> {:.2f}%\n' \
+                          '<b>E/P:</b> {:.2f}%\n<b>ROE:</b> {:.2f}%\n' \
                           '<b>Минимальный прогноз:</b> {}\n' \
                           '<b>Средний прогноз:</b> {}\n' \
                           '<b>Максимальный прогноз:</b> {}\n' \

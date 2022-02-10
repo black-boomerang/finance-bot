@@ -18,7 +18,8 @@ class Analyzer:
     def __init__(self):
         self.database_manager = DatabaseManager()
         self.cloud_manager = CloudManager()
-        self.portfolio = Portfolio()
+        self._portfolio_name = 'portfolio_v1.json'
+        self.portfolio = Portfolio(self._portfolio_name)
 
         self.yahoo_columns = ['Rating', 'Low Target', 'Current Price',
                               'Average Target', 'High Target']
@@ -229,7 +230,7 @@ class Analyzer:
 
         # обновляем историю стоимости портфеля и сохраняем его в хранилище
         self.portfolio.update_history()
-        self.portfolio.save('portfolio_v1.json')
+        self.portfolio.save(self._portfolio_name)
 
     def get_best_companies(self, companies_number=5):
         """

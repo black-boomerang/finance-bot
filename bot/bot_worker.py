@@ -116,4 +116,4 @@ if __name__ == '__main__':
         bot.answer_callback_query(query.id)
 
 
-    bot.polling(none_stop=True)
+    bot.infinity_polling()

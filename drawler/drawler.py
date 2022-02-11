@@ -56,14 +56,3 @@ class Drawler:
                 draw.text((x, y), text, font=font, fill=font_color)
 
         return image
-
-table = {'col1': ['assd', 'fdf', 'gfg', 'juj', 'flf'], 'col2': [3, 4, 3, 4, 5],
-         'col3': [1, 2, 3, 4, 5], 'col4': [3, 4, 3, 4, 5]}
-table = pd.DataFrame(table)
-colors_dict = {'#00083e': (0,), '#b4f870': (1, 3, 5), '#ff9d73': (2, 4)}
-colors_dict = {'#00083e': (0,), '#d9d9d9': (1, 3, 5), '#ffffff': (2, 4), '#FF9273': (2,), '#d4f870': (3,)}
-
-image = Drawler.draw_table(table=table, colors_dict=colors_dict, height=400,
-                           width=1000)
-image.save('3.png')
-

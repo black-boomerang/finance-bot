@@ -31,6 +31,7 @@ class Analyzer:
             last_date -= timedelta(1)
             filename = self._get_ranking_filename(last_date)
         self.last_ranking = pd.read_csv(filename, index_col=0)
+        self.best_companies = self._selection_function(self.last_ranking)
         os.remove(filename)
 
     @staticmethod
@@ -200,22 +201,22 @@ class Analyzer:
         return ranking[
             ranking['Current Price'] < ranking['Average Target']].head(
             companies_number * 6).dropna().sort_values(
-            'Rating').head(companies_number)
+            by=['Rating', 'Summary rang']).head(companies_number)
 
-    def update_portfolio(self, best_companies):
+    def update_portfolio(self):
         """
         Обновление портфеля с учётом изменений в рейтинге акций
         """
         # продажа акций, покинувших топ рейтинга
         tickers_count = 0
         for ticker, number in self.portfolio.get_shares_dict().items():
-            if ticker not in best_companies.index.tolist():
+            if ticker not in self.best_companies.index.tolist():
                 self.portfolio.sell(ticker, number)
                 tickers_count += 1
 
         # покупка акций, только что попавших в топ рейтинга
         money_per_ticker = self.portfolio.free_funds / max(tickers_count, 1)
-        for ticker in best_companies.index.tolist():
+        for ticker in self.best_companies.index.tolist():
             if ticker not in self.portfolio.get_shares_dict().keys():
                 price = self.database_manager.get_share_info(ticker)['price']
                 number = money_per_ticker // price
@@ -232,21 +233,17 @@ class Analyzer:
         self.portfolio.update_history()
         self.portfolio.save(self._portfolio_name)
 
-    def get_best_companies(self, companies_number=5):
+    def get_best_companies(self):
         """
         Определение лучших для покупки акций по версии анализатора.
         Возвращает два значения: первое - лучшие companies_number акций,
         второе - изменился ли их список по сравнению с предыдущим
         """
         ranking = self._get_ranking()
-
-        cur_best = self._selection_function(ranking, companies_number)
-        prev_best = self._selection_function(self.last_ranking,
-                                             companies_number)
+        self.best_companies = self._selection_function(ranking)
         self.last_ranking = ranking
 
         # обновление портфеля
-        self.update_portfolio(cur_best)
+        self.update_portfolio()
 
-        is_changed = (set(prev_best.index) == set(cur_best.index))
-        return cur_best, is_changed
+        return self.best_companies

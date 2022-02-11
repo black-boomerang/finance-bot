@@ -11,3 +11,5 @@ CHROMEDRIVER_PATH = os.getenv('CHROMEDRIVER_PATH')
 GOOGLE_CHROME_BIN = os.getenv('GOOGLE_CHROME_BIN')
 
 PROFIT_TAX = 0.13
+MONTH_NAMES = ('январь', 'февраль', 'март', 'апрель', 'май', 'июнь', 'июль',
+               'август', 'сентябрь', 'октябрь', 'ноябрь', 'декабрь')

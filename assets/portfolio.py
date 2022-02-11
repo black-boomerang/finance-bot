@@ -3,7 +3,7 @@
 import json
 import os
 import typing as tp
-from datetime import date
+from datetime import date, timedelta
 
 import numpy as np
 import pandas as pd
@@ -169,12 +169,23 @@ class Portfolio:
 
         return all_funds
 
-    def get_profitability(self) -> float:
+    def get_total_profitability(self) -> float:
         """
         Получение текущей прибыльности портфеля
         """
         all_funds = self.get_all_funds()
         return all_funds / self.initial_funds - 1.0
+
+    def get_range_profitability(self, first: date,
+                                last: date = date.today()) -> float:
+        """
+        Получение прибыльности портфеля в заданном диапазоне
+        """
+        while str(first) not in self.history.keys():
+            first += timedelta(1)
+        while str(last) not in self.history.keys():
+            last -= timedelta(1)
+        return self.history[str(first)] / self.history[str(last)] - 1.0
 
     def get_shares_dict(self) -> dict:
         """

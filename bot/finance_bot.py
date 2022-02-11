@@ -1,13 +1,16 @@
 # Основной класс бота, запускаемого в bot_worker.py
-
+import calendar
 import os
+from datetime import date
 
-import plotly.figure_factory as ff
+import pandas as pd
 import telebot
 from telebot.types import InlineKeyboardButton
 
 from analyzer import Analyzer
+from drawler import Drawler
 from schedule_thread import ScheduleThread
+from settings import MONTH_NAMES
 from storage import DatabaseManager
 
 
@@ -16,6 +19,7 @@ class FinanceBot(telebot.TeleBot):
         super().__init__(token)
         self.database_manager = DatabaseManager()
         self.analyzer = Analyzer()
+        self.portfolio = self.analyzer.portfolio
 
         # кнопки умной клавиатуры
         self._buttons_info = {
@@ -30,53 +34,93 @@ class FinanceBot(telebot.TeleBot):
             self.keyboard_buttons[callback] = InlineKeyboardButton(text,
                                                                    callback_data=callback)
 
-        # отдельный поток, отвечающий за ежедневную отправку рекомендаций
-        self.thread = ScheduleThread(self.update_recommendations, 'cron',
-                                     day_of_week='mon-fri', hour=21,
-                                     minute=0)
-        self.thread.start()
+        # отдельный поток, отвечающий за отправку изменения рекомендаций и
+        # ежемесячной прибыльности портфеля
+        self.reg_thread = ScheduleThread()
+        self.reg_thread.add_job(self.update_recommendations, 'cron',
+                                day_of_week='mon-fri', hour=21, minute=0)
+        self.reg_thread.add_job(self.send_profitability, 'cron',
+                                day='1', hour=18, minute=0)
+        self.reg_thread.start()
 
     @staticmethod
-    def _get_recommendations_table(companies):
+    def _get_recommendations_table(companies, prev_companies):
         """
         Формирование картинки с рекомендованными акциями
         """
         companies_df = companies.reset_index()[
             ['index', 'Rating', 'Current Price', 'Average Target']]
+        prev_companies_df = prev_companies.reset_index()[
+            ['index', 'Rating', 'Current Price', 'Average Target']]
+
+        # вычисляем добавленные и удалённые из рейтинга акции
+        concat_df = pd.concat(
+            [companies_df['index'], prev_companies_df['index']])
+        indices = (concat_df.drop_duplicates(keep=False).index + 1).tolist()
+        added = indices[:len(indices) // 2]
+        deleted = indices[len(indices) // 2:]
+
         companies_df.columns = ['Тикер', 'Рейтинг', 'Цена', 'Цель']
-        fig = ff.create_table(companies_df)
-        fig.update_layout(
-            autosize=False,
-            width=500,
-            height=200,
-        )
-        fig.write_image('companies_table.png', scale=2)
+        colors_dict = {'#00083e': (0,),
+                       '#d9d9d9': (1, 3, 5),
+                       '#ffffff': (2, 4),
+                       '#d4f870': tuple(added),
+                       '#ff9273': ()
+                       }
+
+        image = Drawler.draw_table(table=companies_df, colors_dict=colors_dict,
+                                   width=1000, height=400)
+        image.save('companies_table.png')
 
     def update_recommendations(self):
         """
         Запуск анализатора и отправка рекомендаций подписчикам,
         если рекомендации изменились
         """
-        best_companies, is_changed = self.analyzer.get_best_companies(5)
-        if is_changed:
-            self.send_recommendations(best_companies)
+        prev_best = self.analyzer.best_companies
+        cur_best = self.analyzer.get_best_companies()
+        if set(prev_best.index) != set(cur_best.index):
+            self.send_recommendations(cur_best, prev_best)
 
-    def send_recommendations(self, best_companies):
+    def send_profitability(self):
+        """
+        Отправка подписчикам прибыльности портфеля за прошедший месяц
+        """
+        today = date.today()
+        prev_month = (today.month + 11) % 12  # индексация с единицы
+        prev_year = today.year - (today.month == 1)
+        last_day = calendar.monthrange(prev_year, prev_month)[1]
+        prev_date = date(prev_year, prev_month, last_day)
+
+        profit = self.portfolio.get_total_profitability()
+        month_profit = self.portfolio.get_range_profitability(first=prev_date)
+
+        month_name = MONTH_NAMES[(today.month + 10) % 12]  # индексация с нуля
+        text = '`Прибыльность за всё время:` {:.2f}%\n' \
+               '`Прибыльность за {}:` {:.2f}%'.format(profit * 100, month_name,
+                                                      month_profit * 100)
+        subscribers = self.database_manager.get_subscribers()
+        for subscriber in subscribers:
+            if subscriber['recommendations']:
+                self.send_message(subscriber['chat_id'], text, (),
+                                  parse_mode='Markdown')
+
+    def send_recommendations(self, best_companies, prev_best_companies):
         """
         Добавление умной клавиатуры к сообщению и вызов метода базового класса.
         Используется для отправки рекомендаций
         """
-        self._get_recommendations_table(best_companies)
-        recommendations_text = 'Список самых недооценённых акций на ' \
-                               'Санкт-Петербуржской бирже на сегодняшний ' \
-                               'день'
+        self._get_recommendations_table(best_companies, prev_best_companies)
+        text = 'Список самых недооценённых акций на ' \
+               'Санкт-Петербуржской бирже на сегодняшний ' \
+               'день'
+        text = 'Произошли изменения в рейтинге акций'
         subscribers = self.database_manager.get_subscribers()
         for subscriber in subscribers:
             if subscriber['recommendations']:
                 try:
                     with open('companies_table.png', 'rb') as sent_img:
-                        self.send_photo(subscriber['chat_id'], sent_img,
-                                        recommendations_text)
+                        self.send_photo(subscriber['chat_id'], sent_img, text)
                 except telebot.apihelper.ApiException:
                     pass
         os.remove('companies_table.png')

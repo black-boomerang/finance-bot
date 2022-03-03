@@ -99,8 +99,8 @@ class Portfolio:
         shares.loc[sold_shares, 'is_closed'] = True
 
         others2 = self.shares_table[self.shares_table['ticker'] != share_ticker]
-        self.shares_table = pd.concat([others1, others2, shares]).reset_index(
-            drop=True)
+        self.shares_table = pd.concat([others1, others2, shares])
+        self.shares_table.index = np.arange(len(self.shares_table))
         self.free_funds += number * price
         return True
 
@@ -159,9 +159,10 @@ class Portfolio:
         Получение текущей стоимости портфеля
         """
         all_funds = self.free_funds
+        shares = self.shares_table[~self.shares_table['is_closed']]
 
         # считаем текущую стоимомть всех акций в портфеле
-        for i, share in self.shares_table.iterrows():
+        for i, share in shares.iterrows():
             ticker = share['ticker']
             num = share['number']
             term = self.database_manager.get_share_info(ticker)['price'] * num
@@ -180,12 +181,13 @@ class Portfolio:
                                 last: date = date.today()) -> float:
         """
         Получение прибыльности портфеля в заданном диапазоне
+        (границы включительно)
         """
         while str(first) not in self.history.keys():
             first += timedelta(1)
         while str(last) not in self.history.keys():
             last -= timedelta(1)
-        return self.history[str(first)] / self.history[str(last)] - 1.0
+        return self.history[str(last)] / self.history[str(first)] - 1.0
 
     def get_shares_dict(self) -> dict:
         """

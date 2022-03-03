@@ -1,5 +1,6 @@
 # Основной класс бота, запускаемого в bot_worker.py
 import calendar
+import copy
 import os
 from datetime import date
 
@@ -26,7 +27,8 @@ class FinanceBot(telebot.TeleBot):
             'subscribe_recommends': 'Подписаться на инвестиционные рекомендации',
             'unsubscribe_recommends': 'Отписаться от инвестиционных рекомендаций',
             'help': 'Помощь',
-            'get_share_info': 'Информация об акции'
+            'get_share_info': 'Информация об акции',
+            'get_previous_version': 'Посмотреть предыдущий рейтинг'
         }
         self.callbacks = self._buttons_info.keys()
         self.keyboard_buttons = dict()
@@ -77,7 +79,7 @@ class FinanceBot(telebot.TeleBot):
         Запуск анализатора и отправка рекомендаций подписчикам,
         если рекомендации изменились
         """
-        prev_best = self.analyzer.best_companies
+        prev_best = copy.copy(self.analyzer.best_companies)
         cur_best = self.analyzer.get_best_companies()
         if set(prev_best.index) != set(cur_best.index):
             self.send_recommendations(cur_best, prev_best)
@@ -87,10 +89,10 @@ class FinanceBot(telebot.TeleBot):
         Отправка подписчикам прибыльности портфеля за прошедший месяц
         """
         today = date.today()
-        prev_month = (today.month + 11) % 12  # индексация с единицы
-        prev_year = today.year - (today.month == 1)
-        last_day = calendar.monthrange(prev_year, prev_month)[1]
-        prev_date = date(prev_year, prev_month, last_day)
+        prev_prev_month = (today.month + 9) % 12 + 1  # индексация с единицы
+        prev_prev_year = today.year - (today.month <= 2)
+        last_day = calendar.monthrange(prev_prev_year, prev_prev_month)[1]
+        prev_date = date(prev_prev_year, prev_prev_month, last_day)
 
         profit = self.portfolio.get_total_profitability()
         month_profit = self.portfolio.get_range_profitability(first=prev_date)
@@ -135,3 +137,14 @@ class FinanceBot(telebot.TeleBot):
             keyboard.row(self.keyboard_buttons[button_name])
         return super().send_message(chat_id, text, reply_markup=keyboard,
                                     **kwargs)
+
+    def send_photo(self, chat_id, sent_img, text, buttons=(), **kwargs):
+        """
+        Добавление умной клавиатуры к сообщению с картинкой и вызов метода
+        базового класса
+        """
+        keyboard = telebot.types.InlineKeyboardMarkup()
+        for button_name in buttons:
+            keyboard.row(self.keyboard_buttons[button_name])
+        return super().send_photo(chat_id, sent_img, text,
+                                  reply_markup=keyboard, **kwargs)

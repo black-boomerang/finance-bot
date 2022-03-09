@@ -118,6 +118,7 @@ class DatabaseManager(metaclass=SingletonMeta):
                 share_info = ShareInfo(ticker, ep, roe, yahoo_rating, price,
                                        low_target, avg_target, high_target)
                 session.add(share_info)
+            session.commit()
 
     def add_companies_names(self):
         white_list = pd.read_excel(os.path.join('resources', 'white_list.xlsx'))

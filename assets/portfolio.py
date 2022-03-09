@@ -136,7 +136,7 @@ class Portfolio:
         Загрузка табличных данных из csv-файла
         """
         self.cloud_manager.download_from_cloud(filename)
-        table = pd.read_csv(filename)
+        table = pd.read_csv(filename, index_col=0)
         os.remove(filename)
         return table
 

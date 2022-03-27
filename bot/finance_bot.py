@@ -148,3 +148,21 @@ class FinanceBot(telebot.TeleBot):
             keyboard.row(self.keyboard_buttons[button_name])
         return super().send_photo(chat_id, sent_img, text,
                                   reply_markup=keyboard, **kwargs)
+
+    def message_handler(self, commands=None, regexp=None, func=None,
+                        content_types=None, chat_types=None, **kwargs):
+        """
+        Специальный декоратор для добавления боту действий, выполняемых всех
+        сообщений пользователя.
+        """
+        decorator = super().message_handler(commands, regexp, func,
+                                            content_types, chat_types, **kwargs)
+
+        def super_decorator(handler):
+            def wrapper(message):
+                self.clear_step_handler(message)
+                handler(message)
+
+            return decorator(wrapper)
+
+        return super_decorator

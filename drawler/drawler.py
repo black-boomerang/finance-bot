@@ -1,4 +1,5 @@
 # Класс отвечающий за создание изображений
+import os
 import typing as tp
 
 import pandas as pd
@@ -26,7 +27,7 @@ class Drawler:
         """
         image = Image.new('RGBA', (width - 1, height - 1), (255, 255, 255, 255))
         draw = ImageDraw.Draw(image)
-        font = ImageFont.truetype("arial.ttf", 32)
+        font = ImageFont.truetype(os.path.join('resources', 'arial.ttf'), 32)
 
         color_by_row = dict()
         for color, rows in colors_dict.items():

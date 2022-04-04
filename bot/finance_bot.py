@@ -1,6 +1,5 @@
 # Основной класс бота, запускаемого в bot_worker.py
 import calendar
-import copy
 import os
 from datetime import date
 
@@ -36,17 +35,19 @@ class FinanceBot(telebot.TeleBot):
             self.keyboard_buttons[callback] = InlineKeyboardButton(text,
                                                                    callback_data=callback)
 
+        self.last_recommendations = dict()
+
         # отдельный поток, отвечающий за отправку изменения рекомендаций и
         # ежемесячной прибыльности портфеля
         self.reg_thread = ScheduleThread()
         self.reg_thread.add_job(self.update_recommendations, 'cron',
-                                day_of_week='mon-fri', hour=21, minute=0)
+                                day_of_week='mon-fri', hour=17, minute=36)
         self.reg_thread.add_job(self.send_profitability, 'cron',
                                 day='1', hour=18, minute=0)
         self.reg_thread.start()
 
     @staticmethod
-    def _get_recommendations_table(companies, prev_companies):
+    def get_recommendations_table(companies, prev_companies):
         """
         Формирование картинки с рекомендованными акциями
         """
@@ -79,7 +80,7 @@ class FinanceBot(telebot.TeleBot):
         Запуск анализатора и отправка рекомендаций подписчикам,
         если рекомендации изменились
         """
-        prev_best = copy.copy(self.analyzer.best_companies)
+        prev_best = self.analyzer.best_companies
         cur_best = self.analyzer.get_best_companies()
         if set(prev_best.index) != set(cur_best.index):
             self.send_recommendations(cur_best, prev_best)
@@ -98,9 +99,11 @@ class FinanceBot(telebot.TeleBot):
         month_profit = self.portfolio.get_range_profitability(first=prev_date)
 
         month_name = MONTH_NAMES[(today.month + 10) % 12]  # индексация с нуля
-        text = '`Прибыльность за всё время:` {:.2f}%\n' \
-               '`Прибыльность за {}:` {:.2f}%'.format(profit * 100, month_name,
-                                                      month_profit * 100)
+        text = '**Результаты работы советника:**\n\n' \
+               '**Прибыльность за всё время:** {:.2f}%\n' \
+               '**Прибыльность за {}:** {:.2f}%'.format(profit * 100,
+                                                        month_name,
+                                                        month_profit * 100)
         subscribers = self.database_manager.get_subscribers()
         for subscriber in subscribers:
             if subscriber['recommendations']:
@@ -112,17 +115,19 @@ class FinanceBot(telebot.TeleBot):
         Добавление умной клавиатуры к сообщению и вызов метода базового класса.
         Используется для отправки рекомендаций
         """
-        self._get_recommendations_table(best_companies, prev_best_companies)
+        self.get_recommendations_table(best_companies, prev_best_companies)
         text = 'Список самых недооценённых акций на ' \
                'Санкт-Петербуржской бирже на сегодняшний ' \
                'день'
-        text = 'Произошли изменения в рейтинге акций'
+        text = 'Изменения в портфеле советника'
         subscribers = self.database_manager.get_subscribers()
         for subscriber in subscribers:
             if subscriber['recommendations']:
                 try:
                     with open('companies_table.png', 'rb') as sent_img:
-                        self.send_photo(subscriber['chat_id'], sent_img, text)
+                        self.last_recommendations[subscriber['chat_id']] = \
+                            self.send_photo(subscriber['chat_id'], sent_img,
+                                            text)  # , ('get_previous_version',))
                 except telebot.apihelper.ApiException:
                     pass
         os.remove('companies_table.png')
@@ -148,6 +153,31 @@ class FinanceBot(telebot.TeleBot):
             keyboard.row(self.keyboard_buttons[button_name])
         return super().send_photo(chat_id, sent_img, text,
                                   reply_markup=keyboard, **kwargs)
+
+    def edit_message(self, chat_id, message_id, text=None, media=None,
+                     buttons=(), **kwargs):
+        """
+        Редактирование текста и медиа в одном методе с добавлением умной
+        клавиатуры
+        """
+        keyboard = telebot.types.InlineKeyboardMarkup()
+        for button_name in buttons:
+            keyboard.row(self.keyboard_buttons[button_name])
+
+        message = None
+        if media is not None:
+            message = super().edit_message_media(media, chat_id, message_id,
+                                                 reply_markup=keyboard)
+            if text is not None:
+                message = super().edit_message_caption(text, chat_id,
+                                                       message.message_id,
+                                                       reply_markup=keyboard,
+                                                       **kwargs)
+        elif text is not None:
+            message = super().edit_message_text(text, chat_id, message_id,
+                                                reply_markup=keyboard,
+                                                **kwargs)
+        return message
 
     def message_handler(self, commands=None, regexp=None, func=None,
                         content_types=None, chat_types=None, **kwargs):

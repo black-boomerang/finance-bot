@@ -1,4 +1,5 @@
 # Этот файл определяет точку входа в приложение. В нём происходит запуск бота
+import telebot
 
 import settings
 from bot.finance_bot import FinanceBot
@@ -102,6 +103,21 @@ if __name__ == '__main__':
         )
 
 
+    def get_previous_version(message):
+        chat_id = message.chat.id
+        try:
+            with open(f'companies_table_{chat_id}.png', 'rb') as sent_img:
+                bot.last_recommendations[chat_id] = bot.edit_message(
+                    chat_id,
+                    bot.last_recommendations[chat_id].message_id,
+                    text=None,
+                    media=sent_img,
+                    buttons=('get_previous_version',),
+                    parse_mode='HTML')
+        except telebot.apihelper.ApiException:
+            pass
+
+
     @bot.callback_query_handler(func=lambda call: True)
     def query_handler(query):
         callback_data = query.data
@@ -113,6 +129,8 @@ if __name__ == '__main__':
             unsubscribe_command(query.message)
         elif callback_data == 'get_share_info':
             share_info_command(query.message)
+        elif callback_data == 'get_previous_version':
+            get_previous_version(query.message)
         bot.answer_callback_query(query.id)
 
 

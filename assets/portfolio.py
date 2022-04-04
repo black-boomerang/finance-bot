@@ -184,7 +184,7 @@ class Portfolio:
         (границы включительно)
         """
         while str(first) not in self.history.keys():
-            first += timedelta(1)
+            first -= timedelta(1)
         while str(last) not in self.history.keys():
             last -= timedelta(1)
         return self.history[str(last)] / self.history[str(first)] - 1.0

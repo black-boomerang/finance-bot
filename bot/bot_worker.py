@@ -105,7 +105,7 @@ if __name__ == '__main__':
 
     def get_previous_version(message):
         chat_id = message.chat.id
-        bot.get_recommendations_table(None, None)
+        # bot.get_recommendations_table(None, None)
         try:
             with open(f'companies_table_{chat_id}.png', 'rb') as sent_img:
                 bot.last_recommendations[chat_id] = bot.edit_message(

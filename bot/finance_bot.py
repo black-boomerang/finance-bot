@@ -41,7 +41,7 @@ class FinanceBot(telebot.TeleBot):
         # ежемесячной прибыльности портфеля
         self.reg_thread = ScheduleThread()
         self.reg_thread.add_job(self.update_recommendations, 'cron',
-                                day_of_week='mon-fri', hour=21, minute=0)
+                                day_of_week='mon-fri', hour=22, minute=0)
         self.reg_thread.add_job(self.send_profitability, 'cron',
                                 day='1', hour=18, minute=0)
         self.reg_thread.start()
@@ -127,7 +127,7 @@ class FinanceBot(telebot.TeleBot):
                     with open('companies_table.png', 'rb') as sent_img:
                         self.last_recommendations[subscriber['chat_id']] = \
                             self.send_photo(subscriber['chat_id'], sent_img,
-                                            text)  # , ('get_previous_version',))
+                                            text) #, ('get_previous_version',))
                 except telebot.apihelper.ApiException:
                     pass
         os.remove('companies_table.png')

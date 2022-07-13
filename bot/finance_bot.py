@@ -41,7 +41,7 @@ class FinanceBot(telebot.TeleBot):
         # ежемесячной прибыльности портфеля
         self.reg_thread = ScheduleThread()
         self.reg_thread.add_job(self.update_recommendations, 'cron',
-                                day_of_week='mon-fri', hour=22, minute=10)
+                                day_of_week='mon-fri', hour=22, minute=15)
         self.reg_thread.add_job(self.send_profitability, 'cron',
                                 day='1', hour=18, minute=0)
         self.reg_thread.start()
